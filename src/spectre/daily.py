@@ -791,7 +791,7 @@ def _make_english(script_path: Path) -> None:
     from google.genai import types
 
     client = genai.Client(api_key=os.environ["GEMINI_API_KEY"], http_options=types.HttpOptions(timeout=40_000))
-    models = ("gemini-3.1-flash-lite", "gemini-2.5-flash", "gemini-3.5-flash-lite", "gemini-3.7-flash", os.getenv("GEMINI_MODEL", "gemini-3.8-flash"))
+    models = ("gemini-3.1-flash-lite", "gemini-3.5-flash-lite", "gemini-3.7-flash", os.getenv("GEMINI_MODEL", "gemini-3.8-flash"))
     data = None
     for attempt in range(len(models) * 2):
         try:

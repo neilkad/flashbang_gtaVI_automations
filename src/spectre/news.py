@@ -24,7 +24,7 @@ FEEDS = (
 )
 RELEVANT = re.compile(r"gta\s*6|gta\s*vi|grand theft auto|rockstar|take-two|vice city|lucia", re.I)
 BAD = re.compile(r"leak|rumou?r|reportedly cancel|nsfw|nude|sex|porn", re.I)
-MODELS = ("gemini-3.1-flash-lite", "gemini-2.5-flash", "gemini-3.5-flash-lite", "gemini-3.7-flash")
+MODELS = ("gemini-3.1-flash-lite", "gemini-3.5-flash-lite", "gemini-3.7-flash")
 
 
 def _seen() -> set[str]:
@@ -53,19 +53,22 @@ def _headlines() -> list[dict]:
 
 
 def _stock_item() -> dict | None:
+    """Take-Two move, worded from real quote data: it states the session date and never says 'currently' for a closed market."""
     try:
         meta = requests.get("https://query1.finance.yahoo.com/v8/finance/chart/TTWO?range=5d&interval=1d",
                             headers={"User-Agent": "Mozilla/5.0"}, timeout=15).json()["chart"]["result"][0]["meta"]
         price, prev = meta["regularMarketPrice"], meta["chartPreviousClose"]
         change = (price - prev) / prev * 100
+        traded = datetime.fromtimestamp(meta["regularMarketTime"], tz=timezone.utc).astimezone()
     except Exception:
         return None
     if abs(change) < 2:
         return None
-    day = datetime.now().strftime("%Y-%m-%d")
-    return {"headline": f"Take-Two Interactive (TTWO) stock is {change:+.1f}% at ${price:,.2f} versus the previous close",
+    direction = "up" if change > 0 else "down"
+    return {"headline": (f"Take-Two Interactive (TTWO) closed {direction} {abs(change):.1f} percent at ${price:,.2f} "
+                         f"in its latest market session (previous close ${prev:,.2f})"),
             "source": "Yahoo Finance market data", "link": "https://finance.yahoo.com/quote/TTWO", "age": 0,
-            "key": f"stock-{day}-{round(change)}", "stock": True}
+            "key": f"stock-{traded:%Y-%m-%d}-{round(change)}", "stock": True}
 
 
 def _ask(prompt: str) -> dict | None:
@@ -102,10 +105,10 @@ def make_plan(slot: str, english: bool) -> bool:
         "You write a 35-second YouTube Short script about GTA 6 news. Use ONLY the facts in the headline below. "
         "Do not add details, numbers, quotes or causes that are not in it. Attribute it, e.g. 'According to "
         f"{pick['source']}', and never present rumours or leaks as confirmed. For stock stories only state the price move; "
-        "never guess why it moved and never give investment advice. Audience: GTA 6 fans and PlayStation 5 players in India, so mention PS5 where it is relevant and true. Voice: write exactly how a real gamer talks to a friend: short sentences, contractions, small reactions like 'okay so' or 'wait', specific details from the headline, never generic filler or announcer phrases like 'Hello viewers' or 'In this video'. Tone: hyped, dramatic, curiosity-driven, fast-paced, like a top gaming Shorts creator; open with the hook, tease the reveal, end with a question that drives comments. No hate, no adult content.\n"
+        "never guess why it moved and never give investment advice. Audience: GTA 6 fans and PlayStation 5 players in India, so mention PS5 where it is relevant and true. Voice: write exactly how a real gamer talks to a friend: short sentences, contractions, small reactions like 'okay so' or 'wait', specific details from the headline, never generic filler or announcer phrases like 'Hello viewers' or 'In this video'. RETENTION RULES (viewers must stay at least 10-15 seconds of a ~20 second Short): the FIRST sentence is a 6-9 word curiosity hook that states the stakes but holds back the answer; make a clear promise ('stay till the end for...'-style but natural, e.g. 'here's the part nobody mentions'); deliver the main fact around second 6-10, not earlier; one new detail every 3-4 seconds; no intro, no filler, no greetings; finish on a payoff then a question. Numbers must be exact as given in the headline. Never say 'right now', 'just now', 'today' or 'live' unless the headline itself says so; for market data say 'closed' and 'in its latest session'. Tone: hyped, dramatic, curiosity-driven, fast-paced, like a top gaming Shorts creator; open with the hook, tease the reveal, end with a question that drives comments. No hate, no adult content.\n"
         f"Language: {lang}.\nHEADLINE: {pick['headline']}\nOUTLET: {pick['source']}\n\n"
         'Return ONLY JSON: {"title": "maximum-curiosity clickbait title under 70 chars (for example: WAIT... GTA 6 JUST DID THIS), 100% true to the headline, ending with one emoji", '
-        '"thumbnail": "2-4 WORDS UPPERCASE", "hook": "shocking first sentence that stops the scroll in 2 seconds (a true teaser, never a false claim)", "voiceover": "70-95 words, ends with a question to the viewer", '
+        '"thumbnail": "2-4 WORDS UPPERCASE", "hook": "shocking first sentence that stops the scroll in 2 seconds (a true teaser, never a false claim)", "voiceover": "50-65 words (about 20-25 seconds spoken), ends with a question to the viewer", '
         '"beats": ["LABEL | DETAIL IN CAPS | visual", "LABEL | DETAIL IN CAPS | visual", "LABEL | DETAIL IN CAPS | visual"], '
         '"hashtags": ["#GTA6", "#GTAVI", "...up to 6 relevant"]}. Labels under 3 words; details under 8 words; no \'|\' inside text.'
     )
