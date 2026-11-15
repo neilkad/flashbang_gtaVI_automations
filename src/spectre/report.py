@@ -28,31 +28,30 @@ FULL_FORM = os.getenv("SPECTRE_FULL_FORM", "SPECTRE (Streaming, Previews, Edits,
 
 
 def build() -> str:
-    now = datetime.now()
-    rows = []
-    for path in sorted((OUT / "daily").glob("*.json"), key=lambda p: p.stat().st_mtime):
-        try:
-            rows.append(json.loads(path.read_text(encoding="utf-8")))
-        except (OSError, ValueError):
-            pass
-    live = [r for r in rows if r.get("youtube_video_id")]
-    recent = live[-3:]
-    queue = {}
-    try:
-        queue = json.loads((OUT / "queue.json").read_text(encoding="utf-8"))
-    except (OSError, ValueError):
-        pass
-    waiting = [i for i in queue.get("items", []) if not i.get("published") and Path(i["file"]).is_file()]
-    errors = [f"{r['slot']}: {r['social'].get(p + '_error')}" for r in live[-6:] for p in ("facebook", "instagram")
-              if r.get("social", {}).get(p + "_error")]
-    hours_left = max(int((datetime(2026, 11, 19) - now).total_seconds() // 3600), 0)
-    lines = [f"{FULL_FORM} update {now:%d %b %H:%M}", f"{hours_left}h to GTA 6 launch",
-             f"Published on YouTube: {len(live)} total", f"Queued ahead: {len(waiting)}"]
-    lines += [f"- {r.get('title', '')[:60]} {r.get('youtube_url', '')}" for r in recent]
-    lines.append(_stock())
-    if errors:
-        lines.append("Needs attention: " + "; ".join(errors[:3]))
-    return "\n".join(lines)
+    from . import dashboard
+
+    st = dashboard.state()
+    an = st["analytics"]
+    P, F = an["platforms"], an["followers"]
+    n = lambda x: "-" if x is None else f"{x:,}"
+    views = sum(P[p]["views"] or 0 for p in P)
+    likes = sum(P[p]["likes"] for p in P)
+    comments = sum(P[p]["comments"] for p in P)
+    last24 = {p: sum(h[p] for h in an["hours"]) for p in P}
+    lines = [f"{FULL_FORM} update {datetime.now():%d %b %H:%M}", f"{st['countdown_hours']}h to GTA 6 launch", "",
+             f"TOTAL: {an['all_posts']} posts | {n(views)} views | {n(likes)} likes | {n(comments)} comments",
+             f"Followers: YT {n(F.get('youtube'))} | FB {n(F.get('facebook'))} | IG {n(F.get('instagram'))}", "",
+             "BY PLATFORM (posts / views / likes / comments / last 24h)"]
+    for key, label in (("youtube", "YouTube"), ("facebook", "Facebook"), ("instagram", "Instagram")):
+        p = P[key]
+        lines.append(f"{label}: {p['posts']} / {n(p['views'])} / {p['likes']} / {p['comments']} / {last24[key]}")
+    lines += ["", f"Queue ahead: {len(st['queue'])} | Next slot: {st['next_slot']} | Scheduler: {st['agent']}", "", "TOP POSTS"]
+    for r in an["top"][:5]:
+        lines.append(f"- [{r['platform'][:2].upper()}] {(r.get('title') or '')[:55]} | {n(r.get('views'))} views, {r.get('likes') or 0} likes | {r.get('url')}")
+    lines += ["", _stock()]
+    if an["notes"]:
+        lines.append("Note: " + "; ".join(an["notes"])[:200])
+    return "\n".join(lines)[:4000]
 
 
 def send() -> None:
