@@ -14,7 +14,7 @@ from .daily import _bank, _section, run_daily
 REVIEW_DIR = Path.home() / "Documents" / "GTA VI" / "Review Queue"
 QUEUE_FILE = Path("output/queue.json")
 TARGET_AHEAD = 6
-SLOT_MINUTES = 30
+SLOT_MINUTES = 60
 FIRST_HOUR = datetime(2026, 11, 15, 16)
 LAST_HOUR = datetime(2026, 11, 18, 23)
 

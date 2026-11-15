@@ -68,9 +68,9 @@ def _agent_state() -> str:
 
 def _next_slot(now: datetime) -> str:
     base = now.replace(minute=0, second=0, microsecond=0)
-    slot = base + timedelta(minutes=30) if now.minute < 30 else base + timedelta(hours=1)
+    slot = base + timedelta(hours=1)
     slot = max(slot, FIRST_SLOT)
-    return slot.strftime("%Y-%m-%d %H:%M") if slot <= LAST_SLOT + timedelta(minutes=30) else "all slots done"
+    return slot.strftime("%Y-%m-%d %H:%M") if slot <= LAST_SLOT else "all slots done"
 
 
 def _read_queue() -> dict:
@@ -132,7 +132,7 @@ def _queue_view() -> list[dict]:
             "description": desc.split("\n\nAI disclosure")[0].strip(),
             "hashtags": _section(md, "Hashtags"), "sources": _section(md, "Sources"),
             "mb": round(Path(item["file"]).stat().st_size / 1e6, 1),
-            "goes_live": (base + timedelta(minutes=30 * n)).strftime("%a %d %b %H:%M") if base and base + timedelta(minutes=30 * n) <= LAST_SLOT + timedelta(minutes=30) else "after launch window",
+            "goes_live": (base + timedelta(hours=n)).strftime("%a %d %b %H:%M") if base and base + timedelta(hours=n) <= LAST_SLOT else "after launch window",
         })
     return rows
 
