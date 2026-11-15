@@ -1,0 +1,41 @@
+# DRAFT, not active. To use: put the project in a PRIVATE GitHub repo, rename this file to
+# .github/workflows/publish-hourly.yml, and add the secrets listed in README.md next to it.
+name: publish-hourly
+on:
+  schedule:
+    - cron: "5 * * * *"   # GitHub cron is UTC and can run 5-30 min late
+  workflow_dispatch: {}
+concurrency: publish
+permissions:
+  contents: write
+jobs:
+  tick:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      TZ: Asia/Kolkata
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.13", cache: pip }
+      - run: sudo apt-get update && sudo apt-get install -y ffmpeg fonts-dejavu-core
+      - run: pip install -r requirements.txt websockets
+      - name: Write credentials
+        run: |
+          printf '%s' '${{ secrets.YOUTUBE_TOKEN_JSON }}' > token.json
+          printf '%s' '${{ secrets.GOOGLE_CLIENT_SECRET_JSON }}' > client_secret.json
+          printf 'GEMINI_API_KEY=%s\n' '${{ secrets.GEMINI_API_KEY }}' > .env
+      - name: Publish next queued Short and refill
+        env:
+          PYTHONPATH: src
+          SPECTRE_AUDIO_MODE: narrated
+          SPECTRE_FONT: /usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf
+        run: |
+          set -a; . ./.env; set +a
+          python -m spectre.cli queue-tick
+      - name: Save queue state
+        run: |
+          git config user.name spectre-bot && git config user.email spectre-bot@users.noreply.github.com
+          git add output/queue.json output/daily output/scripts output/videos
+          git commit -m "queue state" || true
+          git push || true

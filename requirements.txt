@@ -1,0 +1,6 @@
+google-genai>=3.3.0
+google-api-python-client>=2.160.0
+google-auth-oauthlib>=1.2.1
+python-dotenv>=1.0.1
+requests>=2.31
+websockets>=13

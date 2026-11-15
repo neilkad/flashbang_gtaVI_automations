@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "spectre-gaming-agent"
+version = "0.1.0"
+description = "Local Gemini script generation and private YouTube upload starter"
+requires-python = ">=3.10"
+dependencies = [
+  "google-genai>=3.3.0",
+  "google-api-python-client>=2.160.0",
+  "google-auth-oauthlib>=1.2.1",
+  "python-dotenv>=1.0.1",
+]
+
+[project.scripts]
+spectre = "spectre.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]

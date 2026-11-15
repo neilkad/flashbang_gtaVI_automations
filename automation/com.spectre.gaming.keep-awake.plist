@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.spectre.gaming.keep-awake</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/zsh</string>
+    <string>/Users/FlashbangFumbles/Documents/GTA VI/SPECTRE-Gaming-Agent-Starter/automation/keep-awake-until-final-publish.sh</string>
+  </array>
+  <key>WorkingDirectory</key>
+  <string>/Users/FlashbangFumbles/Documents/GTA VI/SPECTRE-Gaming-Agent-Starter</string>
+  <key>RunAtLoad</key>
+  <true/>
+  <key>StandardOutPath</key>
+  <string>/Users/FlashbangFumbles/Documents/GTA VI/SPECTRE-Gaming-Agent-Starter/output/logs/keep-awake.log</string>
+  <key>StandardErrorPath</key>
+  <string>/Users/FlashbangFumbles/Documents/GTA VI/SPECTRE-Gaming-Agent-Starter/output/logs/keep-awake.error.log</string>
+  <key>ProcessType</key>
+  <string>Background</string>
+</dict>
+</plist>

@@ -1,0 +1,193 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>SPECTRE Gaming — Control Room</title>
+<style>
+ :root{--bg:#0b0f1a;--card:#141a2b;--line:#222a40;--mut:#9fb0d0;--acc:#ff2d95;--yel:#ffe600}
+ body{margin:0;background:var(--bg);color:#e8ecf5;font:15px -apple-system,Segoe UI,sans-serif}
+ header{padding:14px 28px;background:linear-gradient(90deg,#ff2d95,#7a3cff);display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:5}
+ h1{margin:0;font-size:20px} .dot{display:inline-block;width:10px;height:10px;border-radius:50%;background:#f33;margin-right:6px}
+ .dot.on{background:#3f6;box-shadow:0 0 8px #3f6}
+ nav{display:flex;gap:6px;padding:12px 28px 0}
+ nav button{background:var(--card);color:var(--mut);border:0;padding:9px 16px;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px}
+ nav button.on{background:#1d2540;color:#fff;border-bottom:2px solid var(--acc)}
+ main{padding:20px 28px}
+ .grid{display:grid;gap:16px;grid-template-columns:repeat(4,1fr)}
+ .card{background:var(--card);border-radius:12px;padding:16px} .card b.big{display:block;font-size:28px;margin-top:6px;color:var(--yel)}
+ .wide{grid-column:1/-1} a{color:#7fd1ff;text-decoration:none}
+ table{width:100%;border-collapse:collapse} td,th{padding:7px 6px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle}
+ th{color:var(--mut);font-weight:500;cursor:pointer;user-select:none}
+ pre{margin:0;max-height:260px;overflow:auto;font-size:12px;color:var(--mut);white-space:pre-wrap}
+ button.b,a.b{background:#2a3358;color:#fff;border:0;border-radius:7px;padding:7px 12px;cursor:pointer;font-size:13px;display:inline-block}
+ button.b:hover,a.b:hover{background:#3a4678} button.pri{background:var(--acc)} button.dng{background:#8a2335}
+ button.b:disabled{opacity:.4;cursor:default}
+ input,textarea,select{background:#0d1222;color:#e8ecf5;border:1px solid #2c3556;border-radius:7px;padding:7px 9px;font:inherit;width:100%;box-sizing:border-box}
+ textarea{min-height:70px;resize:vertical}
+ .bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:16px}
+ .q{display:grid;grid-template-columns:200px 1fr;gap:16px;margin-bottom:16px}
+ .q video{width:200px;border-radius:8px;background:#000;aspect-ratio:9/16}
+ .q .ph{width:200px;aspect-ratio:9/16;border-radius:8px;background:#0d1222;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--mut)}
+ .pill{display:inline-block;background:#222a40;border-radius:20px;padding:2px 10px;font-size:12px;color:var(--mut);margin-right:6px}
+ label{display:block;color:var(--mut);font-size:12px;margin:10px 0 4px}
+ .row{display:flex;gap:6px;margin-top:6px} .row>*{flex:1}
+ .row button,.row a{flex:0 0 auto}
+ #toast{position:fixed;right:20px;bottom:20px;background:#1d2540;border-left:4px solid var(--acc);padding:12px 18px;border-radius:8px;display:none;z-index:9;max-width:420px}
+ .job{background:#2a2410;border-left:4px solid var(--yel);padding:10px 14px;border-radius:8px;margin-bottom:14px}
+ .det td{background:#10162a;padding:14px}
+ .tabp{display:none} .tabp.on{display:block}
+</style>
+<header><h1>SPECTRE Gaming · Control Room</h1><div><span id="dot" class="dot"></span><span id="now">connecting…</span></div></header>
+<nav id="nav">
+ <button data-t="ov" class="on">Overview</button><button data-t="qu">Queue (review)</button><button data-t="li">Published library</button><button data-t="lg">Logs</button>
+</nav>
+<main>
+<div id="jobbox"></div>
+
+<div class="tabp on" id="ov"><div class="grid">
+ <div class="card">Hours to launch<b class="big" id="cd">–</b></div>
+ <div class="card">Published today<b class="big" id="today">–</b></div>
+ <div class="card">Next slot<b class="big" id="next" style="font-size:20px">–</b></div>
+ <div class="card">Scheduler<b class="big" id="agent" style="font-size:20px">–</b>
+   <div class="row"><button class="b" onclick="act('pause')">Pause</button><button class="b pri" onclick="act('resume')">Resume</button></div></div>
+ <div class="card">Cross-posting<b class="big" id="soc" style="font-size:16px;line-height:1.5">–</b>
+   <div class="row"><button class="b" id="fbbtn" onclick="act('toggle_social',{platform:'facebook'})">Facebook</button><button class="b" id="igbtn" onclick="act('toggle_social',{platform:'instagram'})">Instagram</button></div></div>
+ <div class="card">Total views<b class="big" id="tv">–</b></div>
+ <div class="card">Likes<b class="big" id="tl">–</b></div>
+ <div class="card">Comments<b class="big" id="tc">–</b></div>
+ <div class="card">Subs gained · shares<b class="big" id="ts" style="font-size:22px">–</b></div>
+ <div class="card wide" id="warn" style="display:none;background:#3a1a2e">YouTube stats are not connected. Run <code>.venv313/bin/python -m spectre.stats</code> once and approve the read-only access.</div>
+ <div class="card wide"><b style="font-size:16px">All videos · every platform</b><div style="overflow-x:auto"><table id="ovtable"></table></div></div>
+ <div class="card wide"><b style="font-size:16px">Up next</b><table id="upnext"></table></div>
+ <div class="card wide"><b style="font-size:16px">Per day</b><div id="days" style="margin-top:8px"></div></div>
+</div></div>
+
+<div class="tabp" id="qu">
+ <div class="bar">
+  <button class="b pri" onclick="act('tick_now')">Run hourly tick now</button>
+  <button class="b" onclick="act('refill')">Render missing Shorts</button>
+  <button class="b" onclick="act('toggle_refill')" id="refillbtn">Auto-refill</button>
+  <span>Keep <select id="target" style="width:70px;display:inline-block" onchange="act('set_target',{n:this.value})"></select> ahead</span>
+  <button class="b" onclick="act('open_folder')">Open folder in Finder</button>
+  <span class="pill" id="qmeta"></span>
+ </div>
+ <div id="queue"></div>
+</div>
+
+<div class="tabp" id="li">
+ <div class="bar"><input id="search" placeholder="Search title, slot, date…" style="max-width:340px"><a class="b" href="/report" target="_blank">Today's report</a>
+  <a class="b" href="https://studio.youtube.com" target="_blank">YouTube Studio</a></div>
+ <div class="card"><table id="lib"></table></div>
+ <p style="color:var(--mut)">Editing or deleting a published video must be done in YouTube Studio (the upload token has no edit/delete permission). The Studio button on each row opens that exact video.</p>
+</div>
+
+<div class="tabp" id="lg">
+ <div class="card"><b style="font-size:16px">Scheduler log</b><pre id="log"></pre></div><br>
+ <div class="card"><b style="font-size:16px">Dashboard job log</b><pre id="jlog"></pre></div>
+</div>
+</main>
+<div id="toast"></div>
+<script>
+const TOKEN="__TOKEN__";const VIEW_ONLY=!TOKEN;
+const $=i=>document.getElementById(i);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const f=x=>x===undefined?"–":x;
+let S=null,sig={},open=new Set(),sortKey="date",sortDir=-1,playing=new Set();
+function toast(m){const t=$("toast");t.textContent=m;t.style.display="block";clearTimeout(t._h);t._h=setTimeout(()=>t.style.display="none",4500)}
+async function act(name,p={}){
+ if(VIEW_ONLY){toast("View-only on phone. Use the Mac for controls.");return}
+ if(name=="remove"&&!confirm("Remove this Short from the queue? It will not be uploaded."))return;
+ if(name=="publish_now"&&!confirm("Publish this Short publicly right now?"))return;
+ const q=new URLSearchParams({t:TOKEN,...p});
+ try{const r=await fetch(`/api/${name}?${q}`);const j=await r.json();toast(j.msg);sig.q=null;}catch(e){toast("Request failed: "+e)}
+}
+function saveField(seq,name,id){act(name,{seq,text:$(id).value})}
+document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{
+ document.querySelectorAll("nav button").forEach(x=>x.classList.toggle("on",x==b));
+ document.querySelectorAll(".tabp").forEach(x=>x.classList.toggle("on",x.id==b.dataset.t));
+});
+$("search").oninput=()=>{sig.lib=null;if(S)render(S)};
+function stat(d,k){return d&&d[k]!==undefined?d[k]:"–"}
+
+function renderQueue(s){
+ const key=JSON.stringify([s.queue,s.busy,[...playing]]);
+ if(sig.q===key)return;
+ if(document.activeElement&&$("queue").contains(document.activeElement)&&["TEXTAREA","INPUT"].includes(document.activeElement.tagName))return;
+ sig.q=key;
+ $("queue").innerHTML=s.queue.length?s.queue.map((q,i)=>`
+ <div class="card q"><div>${playing.has(q.seq)?`<video controls autoplay playsinline src="/media?t=${TOKEN}&seq=${q.seq}"></video>`:`<div class="ph" onclick="playing.add(${q.seq});sig.q=null;render(S)">▶ Preview</div>`}
+  <div style="margin-top:6px;color:var(--mut);font-size:12px">${esc(q.file)} · ${q.mb} MB</div></div>
+ <div>
+  <div><span class="pill">#${q.seq} · slot ${esc(q.slot)}</span><span class="pill">🕒 goes live ${esc(q.goes_live)}</span></div>
+  <label>Title</label><div class="row"><input id="t${q.seq}" value="${esc(q.title)}"><button class="b" onclick="saveField(${q.seq},'set_title','t${q.seq}')">Save</button></div>
+  <label>Description (AI disclosure is appended automatically)</label><div class="row"><textarea id="d${q.seq}">${esc(q.description)}</textarea><button class="b" onclick="saveField(${q.seq},'set_desc','d${q.seq}')">Save</button></div>
+  <label>Hashtags</label><div class="row"><input id="h${q.seq}" value="${esc(q.hashtags)}"><button class="b" onclick="saveField(${q.seq},'set_tags','h${q.seq}')">Save</button></div>
+  <label>Voiceover (Hinglish) — press Re-render after saving</label><div class="row"><textarea id="v${q.seq}" style="min-height:110px">${esc(q.voiceover)}</textarea><button class="b" onclick="saveField(${q.seq},'set_voiceover','v${q.seq}')">Save</button></div>
+  <details style="margin-top:8px"><summary style="cursor:pointer;color:var(--mut)">Visual beats &amp; sources</summary><pre>${esc(q.beats)}\n\n${esc(q.sources)}</pre></details>
+  <div class="row" style="margin-top:12px;justify-content:flex-start;flex-wrap:wrap">
+   <button class="b" ${i?"":"disabled"} onclick="act('move',{seq:${q.seq},dir:'up'})">↑ Earlier</button>
+   <button class="b" ${i<s.queue.length-1?"":"disabled"} onclick="act('move',{seq:${q.seq},dir:'down'})">↓ Later</button>
+   <button class="b" ${s.busy?"disabled":""} onclick="act('rerender',{seq:${q.seq}})">⟳ Re-render</button>
+   <button class="b pri" ${s.busy?"disabled":""} onclick="act('publish_now',{seq:${q.seq}})">🚀 Publish now</button>
+   <button class="b dng" onclick="act('remove',{seq:${q.seq}})">🗑 Remove</button>
+  </div></div></div>`).join(""):`<div class="card">Queue is empty — press “Render missing Shorts”.</div>`;
+}
+
+function renderLib(s){
+ const term=$("search").value.toLowerCase();
+ const rows=s.library.filter(v=>(v.title+v.slot+v.date).toLowerCase().includes(term)).map(v=>({...v,...(s.stats[v.id]||{})}));
+ rows.sort((a,b)=>((a[sortKey]??0)>(b[sortKey]??0)?1:-1)*sortDir);
+ const key=JSON.stringify([rows,[...open],sortKey,sortDir]);
+ if(sig.lib===key)return; sig.lib=key;
+ const th=(k,l)=>`<th onclick="sortBy('${k}')">${l}${sortKey==k?(sortDir<0?" ↓":" ↑"):""}</th>`;
+ $("lib").innerHTML=`<tr><th></th>${th("date","Date")}${th("slot","Slot")}${th("title","Title")}${th("views","👁")}${th("likes","👍")}${th("comments","💬")}${th("shares","↗")}${th("avg_pct","Retention")}<th></th></tr>`+
+ rows.map(v=>`<tr><td><a href="${esc(v.url)}" target="_blank"><img src="https://i.ytimg.com/vi/${v.id}/hqdefault.jpg" width="84" style="border-radius:6px;display:block" onerror="this.style.visibility='hidden'"></a></td>
+ <td>${v.date} ${v.time}</td><td>${esc(v.slot)}</td><td>${esc(v.title)}</td><td>${stat(v,"views")}</td><td>${stat(v,"likes")}</td><td>${stat(v,"comments")}</td><td>${stat(v,"shares")}</td><td>${v.avg_pct!==undefined?v.avg_pct+"%":"–"}</td>
+ <td><button class="b" onclick="tog('${v.id}')">${open.has(v.id)?"Hide":"Details"}</button></td></tr>
+ ${open.has(v.id)?`<tr class="det"><td colspan="10"><div style="display:flex;gap:18px">
+  ${v.local?`<video controls src="/media?t=${TOKEN}&id=${v.id}" style="width:200px;border-radius:8px;aspect-ratio:9/16;background:#000"></video>`:""}
+  <div style="flex:1"><div class="row" style="justify-content:flex-start;margin:0 0 10px">
+   <a class="b" href="${esc(v.url)}" target="_blank">Watch</a>
+   <a class="b" href="https://studio.youtube.com/video/${v.id}/edit" target="_blank">Edit / delete in Studio</a>
+   <a class="b" href="https://studio.youtube.com/video/${v.id}/analytics/tab-overview/period-default" target="_blank">Analytics</a>
+   <button class="b" onclick="navigator.clipboard.writeText('${esc(v.url)}');toast('Link copied')">Copy link</button></div>
+  <span class="pill">${esc(v.privacy)}</span><span class="pill">avg watch ${f(v.avg_duration)}s</span><span class="pill">subs +${f(v.subs_gained)}</span>${v.social&&v.social.facebook?`<a class="b" href="${esc(v.social.facebook)}" target="_blank">Facebook</a> `:""}${v.social&&v.social.instagram?`<a class="b" href="${esc(v.social.instagram)}" target="_blank">Instagram</a>`:""}
+  <label>Description</label><pre>${esc(v.description)}</pre><label>Voiceover</label><pre>${esc(v.voiceover)}</pre></div></div></td></tr>`:""}`).join("");
+}
+function renderOv(s){
+ const rows=s.library.map(v=>({...v,...(s.stats[v.id]||{})}));
+ const sc=v=>v.social||{};
+ $("ovtable").innerHTML=`<tr><th></th><th>Posted</th><th>Slot</th><th>Title</th><th>👁 Views</th><th>👍 Likes</th><th>💬 Comments</th><th>↗ Shares</th><th>Avg watch</th><th>Retention</th><th>Subs +</th><th>Links</th></tr>`+
+ rows.map(v=>`<tr><td><a href="${esc(v.url)}" target="_blank"><img src="https://i.ytimg.com/vi/${v.id}/hqdefault.jpg" width="64" style="border-radius:6px;display:block" onerror="this.style.visibility='hidden'"></a></td>
+ <td>${esc(v.date)} ${esc(v.time)}</td><td>${esc(v.slot)}</td><td>${esc(v.title)}</td><td>${stat(v,"views")}</td><td>${stat(v,"likes")}</td><td>${stat(v,"comments")}</td><td>${stat(v,"shares")}</td>
+ <td>${v.avg_duration!==undefined?v.avg_duration+"s":"–"}</td><td>${v.avg_pct!==undefined?v.avg_pct+"%":"–"}</td><td>${stat(v,"subs_gained")}</td>
+ <td><a href="${esc(v.url)}" target="_blank">YT</a>${sc(v).facebook?` · <a href="${esc(sc(v).facebook)}" target="_blank">FB</a>`:""}${sc(v).instagram?` · <a href="${esc(sc(v).instagram)}" target="_blank">IG</a>`:""}</td></tr>`).join("")||"<tr><td>No videos yet</td></tr>";
+}
+function sortBy(k){sortDir=sortKey==k?-sortDir:-1;sortKey=k;sig.lib=null;render(S)}
+function tog(id){open.has(id)?open.delete(id):open.add(id);sig.lib=null;render(S)}
+
+function render(s){
+ S=s;
+ $("now").textContent="live · "+s.now; $("cd").textContent=s.countdown_hours; $("today").textContent=s.today_count;
+ $("tv").textContent=s.totals.views; $("tl").textContent=s.totals.likes; $("tc").textContent=s.totals.comments; $("ts").textContent=s.totals.subs_gained+" · "+s.totals.shares;
+ $("warn").style.display=s.stats_error?"block":"none"; if(s.stats_error&&s.stats_error!="not connected")$("warn").textContent="Stats error: "+s.stats_error;
+ $("soc").textContent=s.social.connected?`Page: ${s.social.page} · IG: @${s.social.ig}`:"Not connected";
+ $("fbbtn").textContent="Facebook: "+(s.social.facebook?"ON":"OFF"); $("igbtn").textContent="Instagram: "+(s.social.instagram?"ON":"OFF");
+ $("next").textContent=s.next_slot; $("agent").textContent=s.agent;
+ $("jobbox").innerHTML=s.busy?`<div class="job">⏳ ${esc(s.job.label||"Scheduler running")} — started ${esc(s.job.started||"")}</div>`:(s.job.result&&s.job.result!="running"?`<div class="job">Last job: ${esc(s.job.label)} → ${esc(s.job.result)}</div>`:"");
+ $("upnext").innerHTML=s.queue.slice(0,6).map(q=>`<tr><td>${esc(q.goes_live)}</td><td>${esc(q.title)}</td></tr>`).join("")||"<tr><td>Nothing queued</td></tr>";
+ $("days").textContent=Object.entries(s.per_day).map(([d,n])=>`${d}: ${n}`).join("   ·   ");
+ $("qmeta").textContent=`${s.queue.length} queued · last slot ${s.window_end}`;
+ $("refillbtn").textContent="Auto-refill: "+(s.refill_paused?"OFF":"ON");
+ if(!$("target").options.length)$("target").innerHTML=[1,2,3,4,5,6,8,10,12].map(n=>`<option>${n}</option>`).join("");
+ if(document.activeElement!==$("target"))$("target").value=s.queue_target;
+ renderQueue(s); renderLib(s); renderOv(s);
+ const l=$("log"),atEnd=l.scrollTop+l.clientHeight>=l.scrollHeight-20; l.textContent=s.log.join("\n"); if(atEnd)l.scrollTop=l.scrollHeight;
+ $("jlog").textContent=s.job_log.join("\n");
+}
+function connect(){
+ const ws=new WebSocket(`${location.protocol==='https:'?'wss':'ws'}://${location.host}/ws`);
+ ws.onopen=()=>$("dot").className="dot on";
+ ws.onclose=()=>{$("dot").className="dot";setTimeout(connect,2000)};
+ ws.onmessage=e=>render(JSON.parse(e.data));
+}
+connect();
+</script>

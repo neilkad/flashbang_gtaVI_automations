@@ -1,0 +1,16 @@
+.env
+.venv/
+__pycache__/
+*.py[cod]
+client_secret.json
+token.json
+output/
+input/stream-recordings/*
+!input/stream-recordings/README.md
+.venv313/
+.DS_Store
+token_read.json
+meta_state.json
+input-cache/
+input/quarantine-unlicensed/
+*.tmp
