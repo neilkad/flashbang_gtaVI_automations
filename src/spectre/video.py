@@ -523,6 +523,7 @@ def create_video(script_path: str | Path, voice: str | None = None, require_sour
             f"drawtext=fontfile='{FONT}':text='SPECTRE GAMING':fontcolor=0x57F3FA:fontsize=34:borderw=4:bordercolor=black:x=(w-text_w)/2:y=70",
             f"drawtext=fontfile='{FONT}':textfile=title.txt:fontcolor=white:fontsize=44:borderw=5:bordercolor=black:line_spacing=8:x=(w-text_w)/2:y=120",
             f"drawtext=fontfile='{FONT}':text='Footage\\: Rockstar Games official media':fontcolor=white@0.8:fontsize=24:borderw=3:bordercolor=black:x=(w-text_w)/2:y=h-150",
+            f"drawtext=fontfile='{FONT}':text='FOLLOW @flashbangfumbles':fontcolor=0xffe600:fontsize=30:borderw=4:bordercolor=black:x=(w-text_w)/2:y=h-205",
         ]
         colors = ["0x36E5F0", "0xFF4D8D", "0xF7C948", "0x8E7CFF", "0x56E39F"]
         scene_duration = duration / len(beats)

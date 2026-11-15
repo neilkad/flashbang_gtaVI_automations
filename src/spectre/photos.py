@@ -25,6 +25,7 @@ def _tags(n: int) -> str:
     start = (n * 7) % len(POOL)
     rotated = POOL[start:] + POOL[:start]
     return " ".join(CORE + rotated[:20])
+PROMO = "Follow @flashbangfumbles for daily GTA 6 updates, memes and countdowns. YouTube: youtube.com/@flashbangfumbles"
 DISCLOSURE = "AI disclosure: This post, its caption and graphics are AI-generated. Unofficial fan channel, not affiliated with Rockstar Games or Take-Two Interactive. Image from Rockstar Games' official GTA VI media (c) Rockstar Games / Take-Two."
 
 
@@ -103,11 +104,11 @@ def tick() -> None:
     if n % 2 == 1:
         top, bottom, ask = MEMES[(n // 2) % len(MEMES)]
         _meme(clips[(n * 5) % len(clips)], top, bottom, dest)
-        caption = f"{top.capitalize()} / {bottom.capitalize()}\n\n{ask}\n\n{DISCLOSURE}\n\n{_tags(n)} #Meme #GamingMemes #Relatable"
+        caption = f"{top.capitalize()} / {bottom.capitalize()}\n\n{ask}\n\n{PROMO}\n\n{DISCLOSURE}\n\n{_tags(n)} #Meme #GamingMemes #Relatable"
     else:
         headline, body = _lines(hours_left)[(n // 2) % len(_lines(hours_left))]
         _make(clips[n % len(clips)], headline, dest)
-        caption = f"{body}\n\n{DISCLOSURE}\n\n{_tags(n)}"
+        caption = f"{body}\n\n{PROMO}\n\n{DISCLOSURE}\n\n{_tags(n)}"
     state["done"].append(key)
     state["n"] = n + 1
     try:

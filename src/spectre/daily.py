@@ -760,6 +760,11 @@ _AI_DISCLOSURE_EN = (
 )
 
 
+PROMO_SOCIAL = "Follow @flashbangfumbles on Instagram, Facebook and YouTube for daily GTA 6 updates."
+PROMO = ("Subscribe: https://www.youtube.com/@flashbangfumbles | Instagram: @flashbangfumbles | "
+         "Facebook: facebook.com/FlashbangFumbles")
+
+
 def _is_english_slot(slot: str) -> bool:
     """Queue slots alternate languages from q005 on: odd = pure English, even = Hinglish."""
     match = re.fullmatch(r"q(\d+)", slot)
@@ -1060,7 +1065,7 @@ def run_daily(slot: str, upload: bool = True, day: date | None = None, visibilit
     hashtags = re.findall(r"#[\w]+", _section(markdown, "Hashtags"))
     sources = _section(markdown, "Sources")
     title, hashtags, tags = _seo(title, hashtags)
-    description = f"{description}\n\nSources:\n{sources}\n\n{' '.join(hashtags)}"
+    description = f"{description}\n\n{PROMO}\n\nSources:\n{sources}\n\n{' '.join(hashtags)}"
     state.update({
         "date": day.isoformat(),
         "slot": slot,
@@ -1092,7 +1097,7 @@ def run_daily(slot: str, upload: bool = True, day: date | None = None, visibilit
         try:
             from . import meta
             if not (done.get("facebook") and done.get("instagram")):
-                posted = meta.cross_post(video_path, title, hashtags, _AI_DISCLOSURE_EN if "<!-- english -->" in markdown else _AI_DISCLOSURE, skip=tuple(k for k in ('facebook', 'instagram') if done.get(k)))
+                posted = meta.cross_post(video_path, title, hashtags, PROMO_SOCIAL + '\n\n' + _AI_DISCLOSURE_EN if "<!-- english -->" in markdown else PROMO_SOCIAL + '\n\n' + _AI_DISCLOSURE, skip=tuple(k for k in ('facebook', 'instagram') if done.get(k)))
                 for name in ("facebook", "instagram"):
                     if posted.get(name):
                         done[name] = posted[name]
