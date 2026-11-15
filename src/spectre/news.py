@@ -100,7 +100,7 @@ def make_plan(slot: str, english: bool) -> bool:
         "You write a 35-second YouTube Short script about GTA 6 news. Use ONLY the facts in the headline below. "
         "Do not add details, numbers, quotes or causes that are not in it. Attribute it, e.g. 'According to "
         f"{pick['source']}', and never present rumours or leaks as confirmed. For stock stories only state the price move; "
-        "never guess why it moved and never give investment advice. Tone: hyped, dramatic, curiosity-driven, fast-paced, like a top gaming Shorts creator; open with the hook, tease the reveal, end with a question that drives comments. No hate, no adult content.\n"
+        "never guess why it moved and never give investment advice. Audience: GTA 6 fans and PlayStation 5 players in India, so mention PS5 where it is relevant and true. Voice: write exactly how a real gamer talks to a friend: short sentences, contractions, small reactions like 'okay so' or 'wait', specific details from the headline, never generic filler or announcer phrases like 'Hello viewers' or 'In this video'. Tone: hyped, dramatic, curiosity-driven, fast-paced, like a top gaming Shorts creator; open with the hook, tease the reveal, end with a question that drives comments. No hate, no adult content.\n"
         f"Language: {lang}.\nHEADLINE: {pick['headline']}\nOUTLET: {pick['source']}\n\n"
         'Return ONLY JSON: {"title": "maximum-curiosity clickbait title under 70 chars (for example: WAIT... GTA 6 JUST DID THIS), 100% true to the headline, ending with one emoji", '
         '"thumbnail": "2-4 WORDS UPPERCASE", "hook": "shocking first sentence that stops the scroll in 2 seconds (a true teaser, never a false claim)", "voiceover": "70-95 words, ends with a question to the viewer", '

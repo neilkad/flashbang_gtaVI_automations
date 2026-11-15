@@ -783,7 +783,7 @@ def _make_english(script_path: Path) -> None:
         "with one emoji at the end. Return ONLY JSON: "
         '{"title": "...", "thumbnail": "2-4 WORDS UPPERCASE", "hook": "...", "voiceover": "...", "beats": ["label | detail | visual", ...]} '
         "with the same number and order of beats; UPPERCASE the label and detail; keep the visual field and any '//' separators unchanged. "
-        "Do not include any call to action in the voiceover.\n\n"
+        "Sound like a real gamer talking to a friend, with contractions and short punchy sentences, no announcer phrases. Target PlayStation 5 fans where true. Do not include any call to action in the voiceover.\n\n"
         f"TITLE: {_section(markdown, 'Title')}\nHOOK: {_section(markdown, 'Hook')}\n"
         f"VOICEOVER:\n{_section(markdown, 'Voiceover')}\n\nBEATS:\n{beats}"
     )
@@ -999,7 +999,7 @@ _CLICKBAIT = _CLICKBAIT + tuple(
     (f"GTA 6 vs {r[0]}", f"GTA 6 vs {r[0]}: Kaun Jeetega? 🤯", f"GTA 6 VS {r[0].upper()}"[:28]) for r in _RIVALS
 )
 
-_SEO_HASHTAGS = ("#GTA6", "#GTAVI", "#Shorts", "#GrandTheftAutoVI", "#Rockstar", "#GTA6Trailer", "#GTA6News",
+_SEO_HASHTAGS = ("#GTA6", "#GTAVI", "#Shorts", "#PlayStation", "#PS5Gamers", "#GrandTheftAutoVI", "#Rockstar", "#GTA6Trailer", "#GTA6News",
                  "#GamingShorts", "#Gaming", "#PS5", "#XboxSeriesX", "#Hinglish", "#ViceCity")
 _SEO_TAGS = ("GTA 6", "GTA VI", "GTA 6 release date", "GTA 6 trailer", "GTA 6 news", "GTA 6 Hindi", "GTA 6 Hinglish",
              "Grand Theft Auto VI", "Rockstar Games", "Lucia and Jason", "Vice City", "Leonida", "GTA 6 PS5",
