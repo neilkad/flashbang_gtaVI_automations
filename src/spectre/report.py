@@ -54,6 +54,31 @@ def build() -> str:
     return "\n".join(lines)[:4000]
 
 
+def alert(text: str) -> None:
+    token, chat = os.getenv("TELEGRAM_BOT_TOKEN"), os.getenv("TELEGRAM_CHAT_ID")
+    if token and chat:
+        requests.post(f"https://api.telegram.org/bot{token}/sendMessage", data={"chat_id": chat, "text": text}, timeout=30)
+
+
+def watchdog() -> None:
+    """Telegram alert if nothing has been published for 75+ minutes (at most one alert every 2 hours)."""
+    flag = OUT / ".watchdog"
+    now = datetime.now().timestamp()
+    last = 0.0
+    for path in (OUT / "daily").glob("*.json"):
+        try:
+            if json.loads(path.read_text(encoding="utf-8")).get("youtube_video_id"):
+                last = max(last, path.stat().st_mtime)
+        except (OSError, ValueError):
+            pass
+    if not last or now - last < 75 * 60:
+        return
+    if flag.is_file() and now - flag.stat().st_mtime < 2 * 3600:
+        return
+    flag.write_text(str(now))
+    alert(f"ALERT: no YouTube Short published for {int((now - last) // 60)} minutes. The Mac may be asleep, offline or out of Gemini quota. Check the dashboard.")
+
+
 def send() -> None:
     text = build()
     (OUT / "reports").mkdir(parents=True, exist_ok=True)

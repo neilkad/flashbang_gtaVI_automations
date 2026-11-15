@@ -118,6 +118,11 @@ def tick() -> None:
         photos.tick()
     except Exception as error:
         print(f"Photos skipped: {error}", flush=True)
+    try:
+        from . import report
+        report.watchdog()
+    except Exception as error:
+        print(f"Watchdog skipped: {error}", flush=True)
     refill()
 
 

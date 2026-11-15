@@ -47,6 +47,29 @@ def _lines(hours_left: int) -> list[tuple[str, str]]:
     ]
 
 
+MEMES = (
+    ("ME: I'LL SLEEP EARLY", "GTA 6 AT MIDNIGHT: LOL NO", "Tag the friend who is not sleeping on launch night."),
+    ("MY WALLET: PLEASE STOP", "ME: GTA 6 IS COMING", "Everyone has that one friend. Tag them."),
+    ("PLAN: DO THE STORY MISSION", "REALITY: WANTED LEVEL IN 1 MINUTE", "Be honest, this is you. Comment YES."),
+    ("EVERYONE AT LAUNCH", "ME STILL AT 3 PERCENT DOWNLOADED", "Preload now so this is not you."),
+    ("MOM: GO TO SLEEP", "ME: JUST ONE MORE MISSION", "Every gamer on launch night. Share this."),
+    ("ME CHECKING PRELOAD", "FOR THE 40TH TIME TODAY", "Comment your preload count."),
+    ("FRIEND: IS IT OUT YET?", "ME: 3 DAYS. STOP ASKING", "Send this to the friend who keeps asking."),
+    ("ME EXPLORING VICE CITY", "ME IGNORING EVERY MISSION", "Tell us how many hours before your first mission."),
+    ("PS5 FANS WAITING", "XBOX FANS ALSO WAITING", "One thing we all agree on. Comment READY."),
+    ("MY SLEEP SCHEDULE", "GTA 6 LAUNCH WEEK", "Share if your sleep schedule is gone too."),
+)
+
+
+def _meme(frame: Path, top: str, bottom: str, dest: Path) -> None:
+    def esc(t: str) -> str:
+        return t.replace(":", "\\:").replace("'", "")
+    vf = (f"drawtext=fontfile='{FONT}':text='{esc(top)}':fontsize=66:fontcolor=white:borderw=8:bordercolor=black:x=(w-text_w)/2:y=70,"
+          f"drawtext=fontfile='{FONT}':text='{esc(bottom)}':fontsize=66:fontcolor=white:borderw=8:bordercolor=black:x=(w-text_w)/2:y=h-170,"
+          f"drawtext=fontfile='{FONT}':text='@flashbangfumbles':fontsize=34:fontcolor=0xffe600:borderw=4:bordercolor=black:x=w-text_w-30:y=h-60")
+    subprocess.run([FFMPEG, "-y", "-loglevel", "error", "-i", str(frame), "-vf", vf, "-update", "1", str(dest)], check=True)
+
+
 def _frames() -> list[Path]:
     return sorted((ROOT / "input" / "photo-frames").glob("f*.jpg"))
 
@@ -75,11 +98,16 @@ def tick() -> None:
         return
     n = state["n"]
     hours_left = max(int((datetime(2026, 11, 19) - now).total_seconds() // 3600), 0)
-    headline, body = _lines(hours_left)[n % len(_lines(hours_left))]
     dest = OUT / "photos" / f"{key.replace(':', '')}.jpg"
     dest.parent.mkdir(parents=True, exist_ok=True)
-    _make(clips[n % len(clips)], headline, dest)
-    caption = f"{body}\n\n{DISCLOSURE}\n\n{_tags(n)}"
+    if n % 2 == 1:
+        top, bottom, ask = MEMES[(n // 2) % len(MEMES)]
+        _meme(clips[(n * 5) % len(clips)], top, bottom, dest)
+        caption = f"{top.capitalize()} / {bottom.capitalize()}\n\n{ask}\n\n{DISCLOSURE}\n\n{_tags(n)} #Meme #GamingMemes #Relatable"
+    else:
+        headline, body = _lines(hours_left)[(n // 2) % len(_lines(hours_left))]
+        _make(clips[n % len(clips)], headline, dest)
+        caption = f"{body}\n\n{DISCLOSURE}\n\n{_tags(n)}"
     state["done"].append(key)
     state["n"] = n + 1
     try:
