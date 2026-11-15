@@ -1,6 +1,8 @@
 """Review-first queue: keep Shorts rendered ahead of time and publish one per hour."""
 from __future__ import annotations
 
+import contextlib
+import fcntl
 import json
 import os
 import re
@@ -15,6 +17,15 @@ TARGET_AHEAD = 6
 SLOT_MINUTES = 30
 FIRST_HOUR = datetime(2026, 11, 15, 16)
 LAST_HOUR = datetime(2026, 11, 18, 23)
+
+
+@contextlib.contextmanager
+def _qlock():
+    """Serialise read-modify-write of queue.json between the publisher and the renderer."""
+    QUEUE_FILE.parent.mkdir(parents=True, exist_ok=True)
+    with open(QUEUE_FILE.parent / ".queue.lock", "w") as handle:
+        fcntl.flock(handle, fcntl.LOCK_EX)
+        yield
 
 
 def _load() -> dict:
@@ -46,6 +57,11 @@ def _pending(data: dict) -> list[dict]:
 
 
 def add_rendered(slot: str, day: date, video: Path, script: Path) -> dict:
+    with _qlock():
+        return _add_rendered(slot, day, video, script)
+
+
+def _add_rendered(slot: str, day: date, video: Path, script: Path) -> dict:
     data = _load()
     seq = data["next_seq"]
     data["next_seq"] = seq + 1
@@ -99,20 +115,24 @@ def publish_next() -> str | None:
         pending = _pending(data)
     item = pending[0]
     result = run_daily(item["slot"], upload=True, day=date.fromisoformat(item["day"]), visibility="public")
-    data = _load()
-    for entry in data["items"]:
-        if entry["seq"] == item["seq"]:
-            entry["published"] = result.get("youtube_url", "")
-    data["last_published_hour"] = hour_key
-    _save(data)
+    with _qlock():
+        data = _load()
+        for entry in data["items"]:
+            if entry["seq"] == item["seq"]:
+                entry["published"] = result.get("youtube_url", "")
+        data["last_published_hour"] = hour_key
+        _save(data)
     Path(item["file"]).unlink(missing_ok=True)
     return result.get("youtube_url")
 
 
 def tick() -> None:
-    url = publish_next()
-    if url:
-        print(f"Published {url}", flush=True)
+    try:
+        url = publish_next()
+        if url:
+            print(f"Published {url}", flush=True)
+    except Exception as error:
+        print(f"Publish failed, will retry next tick: {error}", flush=True)
     try:
         from . import photos
         photos.tick()
@@ -123,7 +143,6 @@ def tick() -> None:
         report.watchdog()
     except Exception as error:
         print(f"Watchdog skipped: {error}", flush=True)
-    refill()
 
 
 def publish_item(seq: int | None = None) -> str | None:
