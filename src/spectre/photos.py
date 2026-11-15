@@ -31,20 +31,20 @@ DISCLOSURE = "AI disclosure: This post, its caption and graphics are AI-generate
 
 def _lines(hours_left: int) -> list[tuple[str, str]]:
     return [
-        (f"{hours_left} HOURS TO GO", f"Only {hours_left} hours left for GTA 6. Release: November 19, 2026 on PS5 and Xbox Series X|S. Are you ready?"),
-        ("19 NOVEMBER 2026", "GTA 6 lands on November 19, 2026. Save this post and tag the friend you're playing with on day one."),
-        ("VICE CITY IS BACK", "Vice City and the state of Leonida are the setting for GTA 6. Which area do you want to explore first?"),
-        ("LUCIA AND JASON", "GTA 6 follows two leads, Lucia and Jason. Who are you playing as first?"),
-        ("PS5 OR XBOX?", "GTA 6 is coming to PS5 and Xbox Series X|S. Where will you play? Comment below."),
-        ("WHICH SCENE?", "Official GTA 6 footage from Rockstar. Rate this scene out of 10."),
-        ("MIDNIGHT LAUNCH", "Rockstar says GTA 6 releases at midnight local time on November 19. Who is staying up?"),
-        ("PRELOAD READY?", "Digital preload is open for pre-order holders. Clear your storage now so launch night goes smoothly."),
-        ("TAG YOUR SQUAD", "Tag the friend who will not sleep on launch night. They know who they are."),
-        ("SAVE THIS POST", f"{hours_left} hours to go. Save this post and come back on launch day to see how you felt."),
-        ("DAY ONE PLAN", "What is the first thing you will do in GTA 6? Drive, explore or cause chaos? Tell us below."),
-        ("RATE THE VIBES", "Neon, heat and Vice City energy. Rate the vibes of this scene from 1 to 10."),
-        ("FIRST CAR?", "You can only pick one thing first in GTA 6: a fast car, a boat or a plane. What is it?"),
-        ("WHO'S READY?", "Comment READY if you are counting the hours to GTA 6."),
+        (f"{hours_left} HOURS LEFT 😱", f"Only {hours_left} hours until GTA 6. Are you REALLY ready? Release: November 19, 2026 on PS5 and Xbox Series X|S. Comment READY if you are."),
+        ("THIS CHANGES EVERYTHING", "GTA 6 lands on November 19, 2026. Save this and tag the friend you are playing with on day one."),
+        ("VICE CITY IS BACK 🔥", "Vice City and the state of Leonida. Which area do you explore FIRST? Comment below."),
+        ("WHO ARE YOU PICKING?", "GTA 6 follows Lucia and Jason. Lucia or Jason? Vote in the comments."),
+        ("PS5 OR XBOX? ⚔️", "GTA 6 is coming to PS5 and Xbox Series X|S. Where are you playing? Fight in the comments."),
+        ("RATE THIS SCENE /10", "Official GTA 6 footage. Rate it out of 10 and tell us why."),
+        ("STAYING UP AT MIDNIGHT?", "Rockstar says GTA 6 unlocks at midnight local time on November 19. Who is staying up?"),
+        ("DO THIS BEFORE LAUNCH", "Digital preload is open for pre-order holders. Clear your storage NOW so launch night goes smoothly. Share with a friend who forgets."),
+        ("TAG YOUR SQUAD 👇", "Tag the friend who will NOT sleep on launch night. They know who they are."),
+        ("SAVE THIS POST", f"{hours_left} hours to go. Save this and come back on launch day."),
+        ("FIRST THING YOU'LL DO?", "Drive, explore or cause chaos? Tell us your day-one plan."),
+        ("ONLY REAL FANS KNOW", "Neon, heat and Vice City energy. Rate the vibes from 1 to 10."),
+        ("PICK ONE ONLY 🚗✈️🚤", "Fast car, boat or plane first in GTA 6? Choose one."),
+        ("COMMENT READY 🔥", "Comment READY if you are counting down the hours to GTA 6."),
     ]
 
 
