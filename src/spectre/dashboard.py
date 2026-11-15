@@ -18,7 +18,7 @@ from urllib.parse import parse_qs, urlparse
 from websockets.asyncio.server import serve
 from websockets.http11 import Response
 
-from .stats import get_stats
+from .stats import get_channel, get_stats
 
 ROOT = Path(os.getenv("SPECTRE_ROOT", Path(__file__).resolve().parents[2]))
 OUT = ROOT / "output"
@@ -42,6 +42,7 @@ def _records() -> list[dict]:
         except (OSError, ValueError):
             continue
         data["_mtime"] = datetime.fromtimestamp(path.stat().st_mtime).strftime("%H:%M")
+        data["_ts"] = datetime.fromtimestamp(path.stat().st_mtime).isoformat(timespec="minutes")
         rows.append(data)
     return rows
 
@@ -257,6 +258,48 @@ def action(name: str, q: dict) -> str:
     return "Unknown action"
 
 
+def _analytics(stats: dict, published: list[dict]) -> dict:
+    from . import meta
+
+    social = meta.fetch_stats()
+    yt = [{"id": r["youtube_video_id"], "url": r.get("youtube_url"), "title": r.get("title"), "time": r.get("_ts"),
+           **{k: stats.get(r["youtube_video_id"], {}).get(k) for k in ("views", "likes", "comments", "shares")}} for r in published]
+
+    def local_hour(iso: str | None) -> str | None:
+        if not iso:
+            return None
+        try:
+            dt = datetime.fromisoformat(iso.replace("Z", "+00:00").replace("+0000", "+00:00"))
+            return (dt.astimezone().replace(tzinfo=None) if dt.tzinfo else dt).strftime("%Y-%m-%dT%H")
+        except ValueError:
+            return None
+
+    now = datetime.now().replace(minute=0, second=0, microsecond=0)
+    hours = [(now - timedelta(hours=h)).strftime("%Y-%m-%dT%H") for h in range(23, -1, -1)]
+    per_hour = {h: {"youtube": 0, "facebook": 0, "instagram": 0} for h in hours}
+    for name, rows in (("youtube", yt), ("facebook", social["facebook"]), ("instagram", social["instagram"])):
+        for r in rows:
+            h = local_hour(r.get("time"))
+            if h in per_hour:
+                per_hour[h][name] += 1
+
+    def totals(rows: list[dict]) -> dict:
+        views = [r.get("views") for r in rows if r.get("views") is not None]
+        return {"posts": len(rows), "views": sum(views) if views else None, "likes": sum(r.get("likes") or 0 for r in rows),
+                "comments": sum(r.get("comments") or 0 for r in rows), "shares": sum(r.get("shares") or 0 for r in rows)}
+
+    platforms = {"youtube": totals(yt), "facebook": totals(social["facebook"]), "instagram": totals(social["instagram"])}
+    for name, rows in (("youtube", yt), ("facebook", social["facebook"]), ("instagram", social["instagram"])):
+        for r in rows:
+            r["platform"] = name
+    everything = [*yt, *social["facebook"], *social["instagram"]]
+    everything.sort(key=lambda r: (r.get("views") or 0) + 5 * (r.get("likes") or 0) + 10 * (r.get("comments") or 0), reverse=True)
+    channel = get_channel()
+    return {"platforms": platforms, "hours": [{"h": h[-2:] + ":00", **per_hour[h]} for h in hours], "top": everything[:12],
+            "followers": {"youtube": channel.get("subs"), **social.get("followers", {})}, "notes": social.get("notes", []),
+            "channel": channel, "all_posts": sum(p["posts"] for p in platforms.values())}
+
+
 def _social() -> dict:
     flags = {}
     try:
@@ -334,6 +377,7 @@ def state() -> dict:
         "job_log": _log_tail(12, "dashboard-jobs.log"),
         "library": _published_detail(),
         "social": _social(),
+        "analytics": _analytics(stats["data"], published),
         "window_end": LAST_SLOT.strftime("%d %b %H:%M"),
     }
 

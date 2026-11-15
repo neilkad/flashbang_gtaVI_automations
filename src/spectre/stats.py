@@ -69,6 +69,23 @@ def _fetch(ids: list[str]) -> dict:
     return data
 
 
+def get_channel() -> dict:
+    """Channel-level numbers (subscribers, lifetime views), cached for 5 minutes."""
+    now = time.time()
+    if now - _cache.get("ch_at", 0) > 300:
+        _cache["ch_at"] = now
+        try:
+            creds = _creds()
+            yt = build("youtube", "v3", credentials=creds, cache_discovery=False)
+            item = yt.channels().list(part="statistics,snippet", mine=True).execute()["items"][0]
+            st = item["statistics"]
+            _cache["channel"] = {"title": item["snippet"]["title"], "subs": int(st.get("subscriberCount", 0)),
+                                 "views": int(st.get("viewCount", 0)), "videos": int(st.get("videoCount", 0))}
+        except Exception as exc:
+            _cache["channel"] = {"error": str(exc)[:100]}
+    return _cache.get("channel", {})
+
+
 def get_stats(ids: list[str]) -> dict:
     """Cached for 60 s so the 2 s dashboard push never hammers the API."""
     if time.time() - _cache["at"] > 60 and ids:

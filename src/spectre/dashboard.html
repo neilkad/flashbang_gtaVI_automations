@@ -1,5 +1,6 @@
 <!doctype html>
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>SPECTRE Gaming — Control Room</title>
 <style>
  :root{--bg:#0b0f1a;--card:#141a2b;--line:#222a40;--mut:#9fb0d0;--acc:#ff2d95;--yel:#ffe600}
@@ -33,6 +34,9 @@
  #toast{position:fixed;right:20px;bottom:20px;background:#1d2540;border-left:4px solid var(--acc);padding:12px 18px;border-radius:8px;display:none;z-index:9;max-width:420px}
  .job{background:#2a2410;border-left:4px solid var(--yel);padding:10px 14px;border-radius:8px;margin-bottom:14px}
  .det td{background:#10162a;padding:14px}
+ @media(max-width:1000px){.grid{grid-template-columns:repeat(2,1fr)} .grid>.card{grid-column:span 2!important} .grid>.card:not(.wide){grid-column:auto!important} main{padding:14px} nav{padding:10px 14px 0;flex-wrap:wrap} header{padding:12px 14px}}
+ @media(max-width:560px){.grid{grid-template-columns:1fr} .grid>.card,.grid>.card:not(.wide){grid-column:auto!important} .q{grid-template-columns:1fr} h1{font-size:16px}}
+ .grid>*{min-width:0} .card{overflow-x:auto} canvas{max-width:100%}
  .tabp{display:none} .tabp.on{display:block}
 </style>
 <header><h1>SPECTRE Gaming · Control Room</h1><div><span id="dot" class="dot"></span><span id="now">connecting…</span></div></header>
@@ -42,7 +46,17 @@
 <main>
 <div id="jobbox"></div>
 
-<div class="tabp on" id="ov"><div class="grid">
+<div class="tabp on" id="ov">
+<div class="grid" id="kpis"></div>
+<div class="grid" style="margin-top:16px" id="plats"></div>
+<div class="grid" style="margin-top:16px">
+ <div class="card" style="grid-column:span 2"><b style="font-size:16px">Posts per hour · last 24h</b><canvas id="ch1" height="220" style="width:100%"></canvas><div id="lg1" style="font-size:12px;color:var(--mut)"></div></div>
+ <div class="card" style="grid-column:span 2"><b style="font-size:16px">Engagement by platform</b><canvas id="ch2" height="220" style="width:100%"></canvas><div id="lg2" style="font-size:12px;color:var(--mut)"></div></div>
+ <div class="card wide"><b style="font-size:16px">Top posts · all platforms</b><div style="overflow-x:auto"><table id="toptable"></table></div></div>
+ <div class="card wide" id="anote" style="display:none;background:#2a2410"></div>
+</div>
+<div style="height:16px"></div>
+<div class="grid">
  <div class="card">Hours to launch<b class="big" id="cd">–</b></div>
  <div class="card">Published today<b class="big" id="today">–</b></div>
  <div class="card">Next slot<b class="big" id="next" style="font-size:20px">–</b></div>
@@ -161,6 +175,39 @@ function renderOv(s){
  <td>${v.avg_duration!==undefined?v.avg_duration+"s":"–"}</td><td>${v.avg_pct!==undefined?v.avg_pct+"%":"–"}</td><td>${stat(v,"subs_gained")}</td>
  <td><a href="${esc(v.url)}" target="_blank">YT</a>${sc(v).facebook?` · <a href="${esc(sc(v).facebook)}" target="_blank">FB</a>`:""}${sc(v).instagram?` · <a href="${esc(sc(v).instagram)}" target="_blank">IG</a>`:""}</td></tr>`).join("")||"<tr><td>No videos yet</td></tr>";
 }
+const COL={youtube:"#ff3b3b",facebook:"#4a8cff",instagram:"#ff2d95"};
+const N=x=>x===null||x===undefined?"–":Number(x).toLocaleString();
+function bars(cv,labels,series,stacked){
+ const dpr=window.devicePixelRatio||1,w=cv.clientWidth,h=cv.height;cv.width=w*dpr;cv.height=h*dpr;const c=cv.getContext("2d");c.scale(dpr,dpr);
+ c.clearRect(0,0,w,h);const pad=26,bw=(w-pad*2)/labels.length;
+ const tot=labels.map((_,i)=>stacked?series.reduce((a,s)=>a+s.v[i],0):Math.max(...series.map(s=>s.v[i])));const max=Math.max(1,...tot);
+ c.fillStyle="#9fb0d0";c.font="11px sans-serif";c.fillText(max,2,12);
+ labels.forEach((l,i)=>{let y=h-22;
+  series.forEach((s,k)=>{const bh=(h-44)*s.v[i]/max;c.fillStyle=s.color;
+   if(stacked){c.fillRect(pad+i*bw+2,y-bh,bw-4,bh);y-=bh}else{const w2=(bw-6)/series.length;c.fillRect(pad+i*bw+3+k*w2,h-22-bh,w2-1,bh)}});
+  if(labels.length<=12||i%3==0){c.fillStyle="#9fb0d0";c.save();c.translate(pad+i*bw+bw/2,h-8);c.textAlign="center";c.fillText(l,0,0);c.restore()}});
+}
+function renderAn(s){
+ const a=s.analytics,P=a.platforms,F=a.followers;
+ const sum=k=>["youtube","facebook","instagram"].reduce((t,p)=>t+(P[p][k]||0),0);
+ const views=sum("views"),eng=sum("likes")+sum("comments")+sum("shares");
+ const kp=(t,v,sub)=>`<div class="card">${t}<b class="big">${v}</b><div style="color:var(--mut);font-size:12px">${sub||""}</div></div>`;
+ $("kpis").innerHTML=kp("Total posts (all platforms)",N(a.all_posts),`YT ${P.youtube.posts} · FB ${P.facebook.posts} · IG ${P.instagram.posts}`)+
+  kp("Total views",N(views),"IG views need extra Meta permission")+kp("Engagement (likes + comments + shares)",N(eng),views?((eng/views*100).toFixed(1)+"% of views"):"")+
+  kp("Followers",N((F.youtube||0)+(F.facebook||0)+(F.instagram||0)),`YT ${N(F.youtube)} · FB ${N(F.facebook)} · IG ${N(F.instagram)}`);
+ const nm={youtube:"YouTube",facebook:"Facebook",instagram:"Instagram"};
+ $("plats").innerHTML=Object.keys(nm).map(p=>`<div class="card" style="border-top:4px solid ${COL[p]};grid-column:span ${p=="youtube"?2:1}"><b style="font-size:16px;color:#fff;margin:0">${nm[p]}</b>
+  <table><tr><td>Posts</td><td>${N(P[p].posts)}</td></tr><tr><td>Views</td><td>${N(P[p].views)}</td></tr><tr><td>Likes</td><td>${N(P[p].likes)}</td></tr><tr><td>Comments</td><td>${N(P[p].comments)}</td></tr><tr><td>Followers</td><td>${N(F[p])}</td></tr></table></div>`).join("");
+ const hs=a.hours;bars($("ch1"),hs.map(h=>h.h.slice(0,2)),["youtube","facebook","instagram"].map(p=>({color:COL[p],v:hs.map(h=>h[p])})),true);
+ $("lg1").innerHTML=Object.keys(nm).map(p=>`<span style="color:${COL[p]}">■</span> ${nm[p]}`).join(" &nbsp; ");
+ const mets=["views","likes","comments"];
+ bars($("ch2"),mets.map(m=>m[0].toUpperCase()+m.slice(1)),Object.keys(nm).map(p=>({color:COL[p],v:mets.map(m=>P[p][m]||0)})),false);
+ $("lg2").innerHTML=Object.keys(nm).map(p=>`<span style="color:${COL[p]}">■</span> ${nm[p]}`).join(" &nbsp; ");
+ $("toptable").innerHTML=`<tr><th>Platform</th><th>Post</th><th>Posted</th><th>👁</th><th>👍</th><th>💬</th><th>↗</th></tr>`+a.top.map(r=>`<tr><td style="color:${COL[r.platform]}">${nm[r.platform]}</td><td><a href="${esc(r.url)}" target="_blank">${esc(r.title||r.id)}</a></td><td>${esc((r.time||"").replace("T"," ").slice(0,16))}</td><td>${N(r.views)}</td><td>${N(r.likes)}</td><td>${N(r.comments)}</td><td>${N(r.shares)}</td></tr>`).join("");
+ const notes=[];if(a.notes.includes("instagram_insights"))notes.push("Instagram views/reach need the extra Meta permission instagram_manage_insights. Regenerate the token with it and re-run the Meta key script.");
+ a.notes.filter(n=>n!="instagram_insights").forEach(n=>notes.push(n));
+ $("anote").style.display=notes.length?"block":"none";$("anote").innerHTML=notes.map(esc).join("<br>");
+}
 function sortBy(k){sortDir=sortKey==k?-sortDir:-1;sortKey=k;sig.lib=null;render(S)}
 function tog(id){open.has(id)?open.delete(id):open.add(id);sig.lib=null;render(S)}
 
@@ -179,7 +226,7 @@ function render(s){
  $("refillbtn").textContent="Auto-refill: "+(s.refill_paused?"OFF":"ON");
  if(!$("target").options.length)$("target").innerHTML=[1,2,3,4,5,6,8,10,12].map(n=>`<option>${n}</option>`).join("");
  if(document.activeElement!==$("target"))$("target").value=s.queue_target;
- renderQueue(s); renderLib(s); renderOv(s);
+ renderQueue(s); renderLib(s); renderOv(s); try{renderAn(s)}catch(e){console.log(e)}
  const l=$("log"),atEnd=l.scrollTop+l.clientHeight>=l.scrollHeight-20; l.textContent=s.log.join("\n"); if(atEnd)l.scrollTop=l.scrollHeight;
  $("jlog").textContent=s.job_log.join("\n");
 }

@@ -172,6 +172,53 @@ def _tags(hashtags: list[str], limit: int) -> str:
     return " ".join(seen[:limit])
 
 
+_stats_cache: dict = {"at": 0.0, "data": {}}
+
+
+def fetch_stats() -> dict:
+    """Instagram and Facebook post numbers (cached 5 min). Views need extra Meta permissions; likes/comments don't."""
+    if time.time() - _stats_cache["at"] < 300:
+        return _stats_cache["data"]
+    state = _load()
+    out: dict = {"instagram": [], "facebook": [], "followers": {}, "notes": []}
+    if not state.get("page_id"):
+        return out
+    token = state["page_token"]
+    try:
+        media = _call("GET", f"{API}/{state['ig_id']}/media", params={
+            "fields": "id,media_type,permalink,like_count,comments_count,timestamp,caption", "limit": 100, "access_token": token}, timeout=40)["data"]
+        for m in media:
+            row = {"id": m["id"], "type": m.get("media_type"), "url": m.get("permalink"), "likes": m.get("like_count", 0),
+                   "comments": m.get("comments_count", 0), "time": m.get("timestamp"), "title": (m.get("caption") or "")[:70]}
+            try:
+                ins = _call("GET", f"{API}/{m['id']}/insights", params={
+                    "metric": "views,reach,shares,saved", "access_token": token}, timeout=30)["data"]
+                for item in ins:
+                    row[item["name"]] = item["values"][0]["value"]
+            except MetaError:
+                out["notes"].append("instagram_insights") if "instagram_insights" not in out["notes"] else None
+            out["instagram"].append(row)
+        prof = _call("GET", f"{API}/{state['ig_id']}", params={"fields": "followers_count,media_count", "access_token": token}, timeout=30)
+        out["followers"]["instagram"] = prof.get("followers_count", 0)
+    except Exception as error:
+        out["notes"].append(f"instagram: {str(error)[:80]}")
+    try:
+        reels = _call("GET", f"{API}/{state['page_id']}/video_reels", params={
+            "fields": "id,description,created_time,permalink_url,likes.summary(true),comments.summary(true),views",
+            "limit": 100, "access_token": token}, timeout=40)["data"]
+        for r in reels:
+            out["facebook"].append({"id": r["id"], "url": r.get("permalink_url") or f"https://www.facebook.com/reel/{r['id']}",
+                                    "likes": r.get("likes", {}).get("summary", {}).get("total_count", 0),
+                                    "comments": r.get("comments", {}).get("summary", {}).get("total_count", 0),
+                                    "views": r.get("views"), "time": r.get("created_time"), "title": (r.get("description") or "")[:70]})
+        page = _call("GET", f"{API}/{state['page_id']}", params={"fields": "followers_count,fan_count", "access_token": token}, timeout=30)
+        out["followers"]["facebook"] = page.get("followers_count", page.get("fan_count", 0))
+    except Exception as error:
+        out["notes"].append(f"facebook: {str(error)[:80]}")
+    _stats_cache.update(at=time.time(), data=out)
+    return out
+
+
 def _ig_guard(limit: int) -> None:
     """Refuse to publish when Instagram's rolling 24h quota usage is at or above `limit` (of 100)."""
     state = _load()
