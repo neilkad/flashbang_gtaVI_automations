@@ -89,6 +89,8 @@ def _ask(prompt: str) -> dict | None:
 
 def make_plan(slot: str, english: bool) -> bool:
     """Write output/news_plans/<slot>.json for the freshest unseen story. Returns False if nothing new."""
+    if (PLANS / f"{slot}.json").is_file():
+        return True  # a hand-written flagship plan is already waiting for this slot
     seen = _seen()
     candidates = ([s] if (s := _stock_item()) else []) + _headlines()
     pick = next((c for c in candidates if (c.get("key") or c["headline"]) not in seen), None)
