@@ -1,7 +1,9 @@
-# Livestream recordings for future SPECTRE clips
+# Livestream recordings -> highlight Shorts
 
-Starting after GTA VI launches, save each local livestream recording in this folder. Keep the original recording; the clip workflow will read it and write Shorts under `output/`.
+After each stream, save the recording here (OBS local recording, or download your own stream's VOD from YouTube Studio), then run:
 
-Use a recording saved from your own stream or capture setup. Do not put OAuth files, API keys, or other credentials here.
+    .venv313/bin/python -m spectre.cli highlights --recording "input/stream-recordings/<file>.mp4" --count 8
 
-The current daily command covers the pre-launch countdown through November 18, 2026. Automatic highlight selection from stream recordings still needs to be completed before the post-launch schedule begins.
+It picks the loudest, most action-heavy 5-second windows (shouts, crashes, gunfights, chases), skips the first 30 s and silent parts, and cuts 40 s vertical clips (blurred-background 9:16) into `~/Documents/GTA VI/Review Queue/` as `HL_*.mp4`. Delete the ones you dislike.
+
+Never put OAuth files or API keys here.

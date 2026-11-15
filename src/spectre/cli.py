@@ -41,6 +41,10 @@ def main():
     qr.add_argument("--seq", type=int, required=True)
     sub.add_parser("queue-refill", help="Render until the review queue is full")
 
+    hl = sub.add_parser("highlights", help="Cut the best moments of a stream recording into vertical clips for review")
+    hl.add_argument("--recording", required=True)
+    hl.add_argument("--count", type=int, default=8)
+
     args = parser.parse_args()
     try:
         if args.command == "generate":
@@ -63,6 +67,9 @@ def main():
         elif args.command == "queue-refill":
             from .review_queue import refill
             refill()
+        elif args.command == "highlights":
+            from .highlights import run as run_highlights
+            run_highlights(args.recording, args.count)
         elif args.command == "queue-tick":
             from .review_queue import tick
             tick()
