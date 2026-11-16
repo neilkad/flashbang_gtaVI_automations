@@ -39,7 +39,10 @@
  .grid>*{min-width:0} .card{overflow-x:auto} canvas{max-width:100%}
  .tabp{display:none} .tabp.on{display:block}
 </style>
-<header><h1>SPECTRE Gaming · Control Room</h1><div><span id="dot" class="dot"></span><span id="now">connecting…</span></div></header>
+<header><h1>SPECTRE Gaming · Control Room</h1><div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap">
+ <span id="posting" style="padding:6px 14px;border-radius:20px;font-weight:600;background:#333">Posting: …</span>
+ <button class="b" id="pbtn" onclick="togglePosting()">…</button>
+ <span><span id="dot" class="dot"></span><span id="now">connecting…</span></span></div></header>
 <nav id="nav">
  <button data-t="ov" class="on">Overview</button><button data-t="qu">Queue (review)</button><button data-t="li">Published library</button><button data-t="lg">Logs</button>
 </nav>
@@ -63,7 +66,7 @@
  <div class="card">Scheduler<b class="big" id="agent" style="font-size:20px">–</b>
    <div class="row"><button class="b" onclick="act('pause')">Pause</button><button class="b pri" onclick="act('resume')">Resume</button></div></div>
  <div class="card">Cross-posting<b class="big" id="soc" style="font-size:16px;line-height:1.5">–</b>
-   <div class="row"><button class="b" id="fbbtn" onclick="act('toggle_social',{platform:'facebook'})">Facebook</button><button class="b" id="igbtn" onclick="act('toggle_social',{platform:'instagram'})">Instagram</button></div></div>
+   <div class="row"><button class="b" id="ytbtn" onclick="act('toggle_social',{platform:'youtube'})">YouTube</button><button class="b" id="fbbtn" onclick="act('toggle_social',{platform:'facebook'})">Facebook</button><button class="b" id="igbtn" onclick="act('toggle_social',{platform:'instagram'})">Instagram</button></div></div>
  <div class="card">Total views<b class="big" id="tv">–</b></div>
  <div class="card">Likes<b class="big" id="tl">–</b></div>
  <div class="card">Comments<b class="big" id="tc">–</b></div>
@@ -113,6 +116,10 @@ async function act(name,p={}){
  const q=new URLSearchParams({t:TOKEN,...p});
  try{const r=await fetch(`/api/${name}?${q}`);const j=await r.json();toast(j.msg);sig.q=null;}catch(e){toast("Request failed: "+e)}
 }
+function togglePosting(){ if(!S)return; const on=S.agent!=="not loaded";
+ if(on&&!confirm("Stop ALL automated posting (YouTube, Facebook, Instagram)?"))return;
+ if(!on&&!confirm("Start automated posting (YouTube, Facebook, Instagram)?"))return;
+ act(on?"pause":"resume"); }
 function saveField(seq,name,id){act(name,{seq,text:$(id).value})}
 document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{
  document.querySelectorAll("nav button").forEach(x=>x.classList.toggle("on",x==b));
@@ -213,11 +220,12 @@ function tog(id){open.has(id)?open.delete(id):open.add(id);sig.lib=null;render(S
 
 function render(s){
  S=s;
- $("now").textContent="live · "+s.now; $("cd").textContent=s.countdown_hours; $("today").textContent=s.today_count;
+ $("now").textContent="dashboard connected · "+s.now;
+ {const on=s.agent!=="not loaded";const b=$("posting");b.textContent="Automated posting: "+(on?"ACTIVE":"STOPPED");b.style.background=on?"#1c7c3a":"#8a2335";$("pbtn").textContent=on?"⏹ Stop posting":"▶ Start posting";$("pbtn").className="b "+(on?"dng":"pri");} $("cd").textContent=s.countdown_hours; $("today").textContent=s.today_count;
  $("tv").textContent=s.totals.views; $("tl").textContent=s.totals.likes; $("tc").textContent=s.totals.comments; $("ts").textContent=s.totals.subs_gained+" · "+s.totals.shares;
  $("warn").style.display=s.stats_error?"block":"none"; if(s.stats_error&&s.stats_error!="not connected")$("warn").textContent="Stats error: "+s.stats_error;
  $("soc").textContent=s.social.connected?`Page: ${s.social.page} · IG: @${s.social.ig}`:"Not connected";
- $("fbbtn").textContent="Facebook: "+(s.social.facebook?"ON":"OFF"); $("igbtn").textContent="Instagram: "+(s.social.instagram?"ON":"OFF");
+ $("ytbtn").textContent="YouTube: "+(s.social.youtube?"ON":"OFF"); $("fbbtn").textContent="Facebook: "+(s.social.facebook?"ON":"OFF"); $("igbtn").textContent="Instagram: "+(s.social.instagram?"ON":"OFF");
  $("next").textContent=s.next_slot; $("agent").textContent=s.agent;
  $("jobbox").innerHTML=s.busy?`<div class="job">⏳ ${esc(s.job.label||"Scheduler running")} — started ${esc(s.job.started||"")}</div>`:(s.job.result&&s.job.result!="running"?`<div class="job">Last job: ${esc(s.job.label)} → ${esc(s.job.result)}</div>`:"");
  $("upnext").innerHTML=s.queue.slice(0,6).map(q=>`<tr><td>${esc(q.goes_live)}</td><td>${esc(q.title)}</td></tr>`).join("")||"<tr><td>Nothing queued</td></tr>";

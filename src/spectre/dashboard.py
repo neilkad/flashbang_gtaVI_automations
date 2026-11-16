@@ -171,17 +171,24 @@ def _run_job(label: str, args: list[str]) -> str:
 
 
 def _launchctl(verb: str) -> str:
+    """Start/stop every posting job together: the publisher and the renderer."""
     uid = os.getuid()
     loaded = _agent_state() != "not loaded"
     if verb == "resume" and loaded:
-        return "Scheduler is already running — nothing to resume"
+        return "Automated posting is already running"
     if verb == "pause" and not loaded:
-        return "Scheduler is already paused"
-    cmd = ["launchctl", "bootout", f"gui/{uid}/com.spectre.gaming.scheduled-publish"] if verb == "pause" else ["launchctl", "bootstrap", f"gui/{uid}", str(PLIST)]
-    out = subprocess.run(cmd, capture_output=True, text=True)
-    if out.returncode != 0:
-        return f"{verb} failed: {out.stderr.strip() or out.stdout.strip()}"
-    return "Scheduler paused — no uploads until you resume" if verb == "pause" else "Scheduler resumed"
+        return "Automated posting is already stopped"
+    errors = []
+    for name in ("scheduled-publish", "render"):
+        plist = PLIST.parent / f"com.spectre.gaming.{name}.plist"
+        cmd = (["launchctl", "bootout", f"gui/{uid}/com.spectre.gaming.{name}"] if verb == "pause"
+               else ["launchctl", "bootstrap", f"gui/{uid}", str(plist)])
+        out = subprocess.run(cmd, capture_output=True, text=True)
+        if out.returncode != 0 and not (verb == "pause" and "No such process" in out.stderr):
+            errors.append(out.stderr.strip() or out.stdout.strip())
+    if errors:
+        return f"{verb} failed: {errors[0]}"
+    return "Automated posting STOPPED" if verb == "pause" else "Automated posting STARTED"
 
 
 def action(name: str, q: dict) -> str:
@@ -206,7 +213,7 @@ def action(name: str, q: dict) -> str:
         return f"Queue size set to {data['target']}"
     if name == "toggle_social":
         platform = arg("platform")
-        if platform not in {"facebook", "instagram"}:
+        if platform not in {"facebook", "instagram", "youtube"}:
             return "Unknown platform"
         path = OUT / "social_flags.json"
         flags = json.loads(path.read_text(encoding="utf-8")) if path.is_file() else {}
@@ -312,7 +319,7 @@ def _social() -> dict:
     except ValueError:
         info = {}
     return {"connected": bool(info.get("page_id")), "ig": info.get("ig_username", ""), "page": info.get("page_name", ""),
-            "facebook": flags.get("facebook", True), "instagram": flags.get("instagram", True)}
+            "facebook": flags.get("facebook", True), "instagram": flags.get("instagram", True), "youtube": flags.get("youtube", True)}
 
 
 def _published_detail() -> list[dict]:

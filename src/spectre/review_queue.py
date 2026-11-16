@@ -143,6 +143,9 @@ def publish_next() -> str | None:
     if not slot or not (POSTING_START <= now <= LAST_HOUR + timedelta(hours=1)):
         return None
     key, hour = slot
+    flags_file = Path("output/social_flags.json")
+    if flags_file.is_file() and json.loads(flags_file.read_text(encoding="utf-8")).get("youtube") is False:
+        return None  # YouTube posting switched off on the dashboard
     data = _load()
     if key in data.get("done_slots", []):
         return None
