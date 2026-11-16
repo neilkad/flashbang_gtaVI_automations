@@ -26,7 +26,7 @@ def _tags(n: int) -> str:
     rotated = POOL[start:] + POOL[:start]
     return " ".join(CORE + rotated[:20])
 PROMO = "Follow @flashbangfumbles for daily GTA 6 updates, memes and countdowns. YouTube: youtube.com/@flashbangfumbles"
-DISCLOSURE = "AI disclosure: This post, its caption and graphics are AI-generated. Unofficial fan channel, not affiliated with Rockstar Games or Take-Two Interactive. Image from Rockstar Games' official GTA VI media (c) Rockstar Games / Take-Two."
+DISCLOSURE = "AI disclosure: This post, its caption and graphics are AI-generated. Unofficial fan channel, not affiliated with Rockstar Games or Take-Two Interactive. Image (c) Rockstar Games / Take-Two Interactive, from official GTA VI media (https://www.rockstargames.com/VI)."
 
 
 def _lines(hours_left: int) -> list[tuple[str, str]]:

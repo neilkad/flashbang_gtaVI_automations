@@ -719,7 +719,7 @@ def _write_script(day: date, slot: str, plan: ContentPlan) -> Path:
     beats = "\n".join(f"- {label} | {copy} | {visual}" for label, copy, visual in plan.beats)
     description = (
         "Official GTA VI launch update and practical prep information.\n\n"
-        "AI disclosure: The script, voice, music, captions and graphics in this video are AI-generated. Unofficial fan channel, not affiliated with or endorsed by Rockstar Games or Take-Two Interactive. Footage is from Rockstar Games' official media (c) Rockstar Games / Take-Two. SPECTRE Gaming selected the topic and checked the claims against the linked sources."
+        "AI disclosure: The script, voice, music, captions and graphics in this video are AI-generated. Unofficial fan channel, not affiliated with or endorsed by Rockstar Games or Take-Two Interactive. Footage and images: (c) Rockstar Games / Take-Two Interactive, from Rockstar's official GTA VI media (https://www.rockstargames.com/VI). All rights belong to their owners; shown here as fan commentary. SPECTRE Gaming selected the topic and checked the claims against the linked sources."
     )
     script_path.write_text(
         "\n".join((
@@ -751,12 +751,12 @@ def _section(markdown: str, heading: str) -> str:
 
 
 _AI_DISCLOSURE = (
-    "AI disclosure: Is video ki script, awaaz, music, captions aur graphics AI se bane hain. Yeh ek unofficial fan channel hai, Rockstar Games ya Take-Two Interactive se judaa ya unka endorsed nahi hai. Footage Rockstar Games ke official media se hai (c) Rockstar Games / Take-Two."
+    "AI disclosure: Is video ki script, awaaz, music, captions aur graphics AI se bane hain. Yeh ek unofficial fan channel hai, Rockstar Games ya Take-Two Interactive se judaa ya unka endorsed nahi hai. Footage aur images (c) Rockstar Games / Take-Two Interactive ke hain, Rockstar ke official GTA VI media se (https://www.rockstargames.com/VI). Saare rights unke owners ke paas hain."
 )
 
 
 _AI_DISCLOSURE_EN = (
-    "AI disclosure: The script, voice, music, captions and graphics in this video are AI-generated. Unofficial fan channel, not affiliated with or endorsed by Rockstar Games or Take-Two Interactive. Footage is from Rockstar Games' official media (c) Rockstar Games / Take-Two."
+    "AI disclosure: The script, voice, music, captions and graphics in this video are AI-generated. Unofficial fan channel, not affiliated with or endorsed by Rockstar Games or Take-Two Interactive. Footage and images: (c) Rockstar Games / Take-Two Interactive, from Rockstar's official GTA VI media (https://www.rockstargames.com/VI). All rights belong to their owners; shown here as fan commentary."
 )
 
 
