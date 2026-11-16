@@ -106,8 +106,9 @@ def refill(target: int | None = None) -> None:
         print(f"Queued {slot}", flush=True)
 
 
-YT_SLOTS = (9, 15, 21)      # three YouTube Shorts a day
+YT_SLOTS = (15, 21)         # two YouTube Shorts a day
 SOCIAL_SLOTS = (15, 21)     # the 15:00 and 21:00 Shorts also go to Instagram and Facebook as Reels
+POSTING_START = datetime(2026, 11, 18)   # posting paused until Wednesday
 CATCHUP_HOURS = 3           # a missed slot is still published for up to 3 hours
 
 
@@ -139,7 +140,7 @@ def publish_next() -> str | None:
     """Publish the oldest reviewed Short when a daily slot is due and not yet used."""
     now = datetime.now()
     slot = _due_slot(now)
-    if not slot or not (FIRST_HOUR <= now <= LAST_HOUR + timedelta(hours=1)):
+    if not slot or not (POSTING_START <= now <= LAST_HOUR + timedelta(hours=1)):
         return None
     key, hour = slot
     data = _load()
