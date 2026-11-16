@@ -70,6 +70,13 @@ def _add_rendered(slot: str, day: date, video: Path, script: Path) -> dict:
     target = REVIEW_DIR / f"{seq + 1:03d}_{title}.mp4"
     target.write_bytes(Path(video).read_bytes())
     item = {"seq": seq, "slot": slot, "day": day.isoformat(), "file": str(target)}
+    try:
+        from . import news
+        plan = news.load_plan(slot)
+        if plan and plan.get("not_before"):
+            item["not_before"] = plan["not_before"]
+    except Exception:
+        pass
     data["items"].append(item)
     _save(data)
     return item
@@ -138,10 +145,12 @@ def publish_next() -> str | None:
     data = _load()
     if key in data.get("done_slots", []):
         return None
-    pending = _pending(data)
-    if not pending:
+    now_iso = now.strftime("%Y-%m-%dT%H:%M")
+    eligible = [i for i in _pending(data) if not i.get("not_before") or i["not_before"] <= now_iso]
+    eligible.sort(key=lambda i: (0 if i.get("not_before") else 1, i["seq"]))  # campaign videos go first on their day
+    if not eligible:
         return None
-    item = pending[0]
+    item = eligible[0]
     social = hour in SOCIAL_SLOTS
     os.environ["SPECTRE_CROSSPOST"] = "1" if social else "0"
     result = run_daily(item["slot"], upload=True, day=date.fromisoformat(item["day"]), visibility="public")

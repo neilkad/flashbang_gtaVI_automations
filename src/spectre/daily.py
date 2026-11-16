@@ -667,7 +667,7 @@ def _plan(day: date, slot: str) -> ContentPlan:
             beats = tuple(b if len(b) == 3 else (b[0], b[-1], "gap") for b in beats)
             tags = tuple(item.get("hashtags") or ("#GTA6", "#GTAVI"))
             return ContentPlan(title=item["title"], hook=item.get("hook") or item["title"], voiceover=item["voiceover"],
-                               beats=beats, hashtags=tags, sources=(item["source_link"], ROCKSTAR_RELEASE))
+                               beats=beats, hashtags=tags, sources=tuple(item.get("sources_extra") or (item["source_link"],)) + (ROCKSTAR_RELEASE,))
         order = _fresh(day) + _bank(day)
         return order[max(int(slot[1:]) - 4, 0) % len(order)]
     hg = {"g1": _hg_download_plan, "g2": _hg_editions_plan, "g3": _hg_countries_plan, "g4": _hg_story_plan, "g5": _hg_wait_plan}
