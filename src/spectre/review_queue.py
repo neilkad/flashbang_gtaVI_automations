@@ -173,6 +173,11 @@ def publish_next() -> str | None:
 
 def tick() -> None:
     try:
+        from . import streamshorts
+        streamshorts.tick()
+    except Exception as error:
+        print(f"Stream shorts skipped: {error}", flush=True)
+    try:
         url = publish_next()
         if url:
             print(f"Published {url}", flush=True)

@@ -14,7 +14,7 @@ import subprocess
 from pathlib import Path
 
 FFMPEG = "/opt/homebrew/opt/ffmpeg-full/bin/ffmpeg"
-REVIEW = Path.home() / "Documents" / "GTA VI" / "Review Queue"
+REVIEW = Path.home() / "Documents" / "GTA VI" / "Review Queue" / "Stream Clips"
 WINDOW = 5.0
 CLIP_LEN = 40.0
 

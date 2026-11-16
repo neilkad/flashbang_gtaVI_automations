@@ -1,9 +1,9 @@
-# Livestream recordings -> highlight Shorts
+# Livestream -> daily Shorts
 
-After each stream, save the recording here (OBS local recording, or download your own stream's VOD from YouTube Studio), then run:
+1. Save your stream recording (OBS local recording, or your own stream VOD downloaded from YouTube Studio) into this folder.
+2. Within ~5 minutes of the file finishing, SPECTRE cuts the 6 best moments (loudest / most action) into
+   `~/Documents/GTA VI/Review Queue/Stream Clips/HL_*.mp4`.
+3. Delete any clip you don't want. Posting starts 19 Nov: up to 2 Shorts a day (about 15:00 and 21:00), oldest clip first,
+   to YouTube, then Facebook + Instagram, and you get a Telegram message per post. Posted clips move to `Stream Clips/posted/`.
 
-    .venv313/bin/python -m spectre.cli highlights --recording "input/stream-recordings/<file>.mp4" --count 8
-
-It picks the loudest, most action-heavy 5-second windows (shouts, crashes, gunfights, chases), skips the first 30 s and silent parts, and cuts 40 s vertical clips (blurred-background 9:16) into `~/Documents/GTA VI/Review Queue/` as `HL_*.mp4`. Delete the ones you dislike.
-
-Never put OAuth files or API keys here.
+Titles are rotating clickbait templates for now. Never put OAuth files or API keys here.
