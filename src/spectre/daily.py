@@ -1092,7 +1092,7 @@ def run_daily(slot: str, upload: bool = True, day: date | None = None, visibilit
         _save_state(state_file, state)
         _archive_short(video_path, day, slot, state.get("title") or plan.title, video_id)
 
-    if upload and state.get("youtube_video_id"):
+    if upload and state.get("youtube_video_id") and os.getenv("SPECTRE_CROSSPOST", "1") != "0":
         done = state.setdefault("social", {})
         try:
             from . import meta

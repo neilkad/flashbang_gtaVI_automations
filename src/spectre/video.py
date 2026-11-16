@@ -296,6 +296,25 @@ def _create_music_bed(ffmpeg: str, duration: float, path: Path) -> None:
     ], check=True)
 
 
+def _local_voice(text: str, output_path: Path) -> bool:
+    """Free offline fallback when Gemini TTS quota is exhausted: the macOS Indian-English voice."""
+    voice = os.getenv("SPECTRE_LOCAL_VOICE", "Rishi")
+    ffmpeg = _ffmpeg_tool("ffmpeg")
+    if not ffmpeg:
+        return False
+    aiff = output_path.with_suffix(".aiff")
+    try:
+        subprocess.run(["say", "-v", voice, "-r", "185", "-o", str(aiff), text], check=True, timeout=180)
+        subprocess.run([ffmpeg, "-y", "-loglevel", "error", "-i", str(aiff), "-ar", "24000", "-ac", "1", str(output_path)], check=True)
+    except Exception as error:
+        print(f"Local voice failed: {error}", flush=True)
+        return False
+    finally:
+        aiff.unlink(missing_ok=True)
+    print(f"Gemini TTS quota exhausted; used local voice '{voice}'.", flush=True)
+    return output_path.is_file() and output_path.stat().st_size > 0
+
+
 def _generate_narration(voiceover: str, output_path: Path, voice_name: str) -> None:
     """Generate expressive narration with Gemini TTS and save its WAV output."""
     load_dotenv()
@@ -340,6 +359,8 @@ def _generate_narration(voiceover: str, output_path: Path, voice_name: str) -> N
             if not (unavailable or quota):
                 raise
             if candidate == models[-1]:
+                if _local_voice(voiceover, output_path):
+                    return
                 raise RuntimeError(
                     "No configured Gemini TTS model is available to this API key. "
                     "Try gemini-3.1-flash-tts-preview or gemini-2.5-flash-preview-tts in .env."
@@ -521,7 +542,7 @@ def create_video(script_path: str | Path, voice: str | None = None, require_sour
         graph = [
             "eq=brightness=-0.06:saturation=1.08",
             f"drawtext=fontfile='{FONT}':text='SPECTRE GAMING':fontcolor=0x57F3FA:fontsize=34:borderw=4:bordercolor=black:x=(w-text_w)/2:y=70",
-            f"drawtext=fontfile='{FONT}':textfile=title.txt:fontcolor=white:fontsize=44:borderw=5:bordercolor=black:line_spacing=8:x=(w-text_w)/2:y=120",
+            f"drawtext=fontfile='{FONT}':expansion=none:textfile=title.txt:fontcolor=white:fontsize=44:borderw=5:bordercolor=black:line_spacing=8:x=(w-text_w)/2:y=120",
             f"drawtext=fontfile='{FONT}':text='Footage\\: Rockstar Games official media':fontcolor=white@0.8:fontsize=24:borderw=3:bordercolor=black:x=(w-text_w)/2:y=h-150",
             f"drawtext=fontfile='{FONT}':text='FOLLOW @flashbangfumbles':fontcolor=0xffe600:fontsize=30:borderw=4:bordercolor=black:x=(w-text_w)/2:y=h-205",
         ]
@@ -534,8 +555,8 @@ def create_video(script_path: str | Path, voice: str | None = None, require_sour
             color = colors[index % len(colors)]
             if " // " in beats[index][1] and beats[index][2].upper() == "MEME":
                 graph.extend([
-                    f"drawtext=fontfile='{FONT}':textfile=beat-{index}-top.txt:fontcolor=white:fontsize=92:borderw=9:bordercolor=black:line_spacing=14:x=(w-text_w)/2:y=330:enable='{window}'",
-                    f"drawtext=fontfile='{FONT}':textfile=beat-{index}-bottom.txt:fontcolor=white:fontsize=92:borderw=9:bordercolor=black:line_spacing=14:x=(w-text_w)/2:y=1150:enable='{window}'",
+                    f"drawtext=fontfile='{FONT}':expansion=none:textfile=beat-{index}-top.txt:fontcolor=white:fontsize=92:borderw=9:bordercolor=black:line_spacing=14:x=(w-text_w)/2:y=330:enable='{window}'",
+                    f"drawtext=fontfile='{FONT}':expansion=none:textfile=beat-{index}-bottom.txt:fontcolor=white:fontsize=92:borderw=9:bordercolor=black:line_spacing=14:x=(w-text_w)/2:y=1150:enable='{window}'",
                 ])
                 continue
             if " // " in beats[index][1]:
@@ -550,25 +571,25 @@ def create_video(script_path: str | Path, voice: str | None = None, require_sour
                     f"drawbox=x=60:y=300:w=960:h=470:color=0x0A2A3A@0.5:t=fill:enable='{window}'",
                     f"drawbox=x=60:y=300:w=960:h=12:color=0x36E5F0@1:t=fill:enable='{window}'",
                     f"drawtext=fontfile='{FONT}':text='{hdr_top}':fontcolor=0x36E5F0:fontsize=40:x=100:y=345:enable='{window}'",
-                    f"drawtext=fontfile='{FONT}':textfile=beat-{index}-top.txt:fontcolor=white:fontsize=72:line_spacing=16:x=100:y=450:enable='{window}'",
+                    f"drawtext=fontfile='{FONT}':expansion=none:textfile=beat-{index}-top.txt:fontcolor=white:fontsize=72:line_spacing=16:x=100:y=450:enable='{window}'",
                     f"drawbox=x=60:y=830:w=960:h=470:color=0x3A0A24@0.5:t=fill:enable='{window}'",
                     f"drawbox=x=60:y=830:w=960:h=12:color=0xFF2E88@1:t=fill:enable='{window}'",
                     f"drawtext=fontfile='{FONT}':text='{hdr_bottom}':fontcolor=0xFF2E88:fontsize=40:x=100:y=875:enable='{window}'",
-                    f"drawtext=fontfile='{FONT}':textfile=beat-{index}-bottom.txt:fontcolor=white:fontsize=72:line_spacing=16:x=100:y=980:enable='{window}'",
+                    f"drawtext=fontfile='{FONT}':expansion=none:textfile=beat-{index}-bottom.txt:fontcolor=white:fontsize=72:line_spacing=16:x=100:y=980:enable='{window}'",
                     f"drawbox=x=440:y=748:w=200:h=104:color=0xFFE600@1:t=fill:enable='{window}'",
                     f"drawtext=fontfile='{FONT}':text='{badge}':fontcolor=black:fontsize=72:x=(w-text_w)/2:y=768:enable='{window}'",
                 ])
                 continue
             graph.extend([
                 f"drawbox=x=60:y=1090:w=10:h=170:color={color}@1.0:t=fill:enable='{window}'",
-                f"drawtext=fontfile='{FONT}':textfile=beat-{index}-label.txt:fontcolor={color}:fontsize=64:borderw=6:bordercolor=black:x=95:y=1085:enable='{window}'",
-                f"drawtext=fontfile='{FONT}':textfile=beat-{index}-detail.txt:fontcolor=white:fontsize=44:borderw=5:bordercolor=black:line_spacing=10:x=95:y=1170:enable='{window}'",
+                f"drawtext=fontfile='{FONT}':expansion=none:textfile=beat-{index}-label.txt:fontcolor={color}:fontsize=64:borderw=6:bordercolor=black:x=95:y=1085:enable='{window}'",
+                f"drawtext=fontfile='{FONT}':expansion=none:textfile=beat-{index}-detail.txt:fontcolor=white:fontsize=44:borderw=5:bordercolor=black:line_spacing=10:x=95:y=1170:enable='{window}'",
             ])
         # Opening cover frame: YouTube uses an early frame as the Shorts cover.
         (temp_dir / "cover.txt").write_text(_cover_text(markdown, title), encoding="utf-8")
         graph.extend([
             "drawbox=x=0:y=0:w=iw:h=ih:color=0x07111F@0.55:t=fill:enable='lt(t,0.5)'",
-            f"drawtext=fontfile='{FONT}':textfile=cover.txt:fontcolor=0xFFE600:fontsize=118:borderw=10:bordercolor=black:line_spacing=18:x=(w-text_w)/2:y=(h-text_h)/2:enable='lt(t,0.5)'",
+            f"drawtext=fontfile='{FONT}':expansion=none:textfile=cover.txt:fontcolor=0xFFE600:fontsize=118:borderw=10:bordercolor=black:line_spacing=18:x=(w-text_w)/2:y=(h-text_h)/2:enable='lt(t,0.5)'",
         ])
         graph.append("subtitles=filename=captions.ass")
         filter_graph = ",".join(graph)
@@ -693,7 +714,7 @@ def create_thumbnail(script_path: str | Path) -> Path:
             "drawbox=x=0:y=0:w=iw:h=ih:color=0x000000@0.18:t=fill,"
             "drawbox=x=0:y=ih-330:w=iw:h=330:color=0x000000@0.55:t=fill,"
             f"drawbox=x=0:y=0:w=iw:h=ih:color={accent_hex}@1:t=14,"
-            f"drawtext=fontfile='{FONT}':textfile=t.txt:fontcolor=0xFFE600:fontsize={size}:"
+            f"drawtext=fontfile='{FONT}':expansion=none:textfile=t.txt:fontcolor=0xFFE600:fontsize={size}:"
             "line_spacing=8:borderw=12:bordercolor=black:shadowx=6:shadowy=6:x=50:y=h-text_h-60"
         )
         subprocess.run(
