@@ -296,6 +296,29 @@ def _create_music_bed(ffmpeg: str, duration: float, path: Path) -> None:
     ], check=True)
 
 
+def _neural_voice(text: str, output_path: Path) -> bool:
+    """Free natural-sounding Microsoft neural voice (edge-tts) used when Gemini TTS quota is exhausted."""
+    voice = os.getenv("SPECTRE_EDGE_VOICE", "en-IN-PrabhatNeural")
+    ffmpeg = _ffmpeg_tool("ffmpeg")
+    if not ffmpeg:
+        return False
+    mp3 = output_path.with_suffix(".mp3")
+    try:
+        import asyncio
+
+        import edge_tts
+
+        asyncio.run(edge_tts.Communicate(text, voice, rate=os.getenv("SPECTRE_EDGE_RATE", "+8%")).save(str(mp3)))
+        subprocess.run([ffmpeg, "-y", "-loglevel", "error", "-i", str(mp3), "-ar", "24000", "-ac", "1", str(output_path)], check=True)
+    except Exception as error:
+        print(f"Neural voice failed: {error}", flush=True)
+        return False
+    finally:
+        mp3.unlink(missing_ok=True)
+    print(f"Gemini TTS quota exhausted; used neural voice '{voice}'.", flush=True)
+    return output_path.is_file() and output_path.stat().st_size > 0
+
+
 def _local_voice(text: str, output_path: Path) -> bool:
     """Free offline fallback when Gemini TTS quota is exhausted: the macOS Indian-English voice."""
     voice = os.getenv("SPECTRE_LOCAL_VOICE", "Rishi")
@@ -359,7 +382,7 @@ def _generate_narration(voiceover: str, output_path: Path, voice_name: str) -> N
             if not (unavailable or quota):
                 raise
             if candidate == models[-1]:
-                if _local_voice(voiceover, output_path):
+                if _neural_voice(voiceover, output_path) or _local_voice(voiceover, output_path):
                     return
                 raise RuntimeError(
                     "No configured Gemini TTS model is available to this API key. "
